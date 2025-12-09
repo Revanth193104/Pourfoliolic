@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { auth, signInWithGoogle, logOut, getIdToken } from "@/lib/firebase";
+import { auth, signInWithGoogle, logOut, getIdToken, resetPassword } from "@/lib/firebase";
 import type { User as FirebaseUser } from "firebase/auth";
 import type { User } from "@shared/schema";
 import { useQueryClient } from "@tanstack/react-query";
@@ -42,11 +42,21 @@ export function useAuth() {
     return () => unsubscribe();
   }, []);
 
-  const login = async () => {
+  const login = async (rememberMe: boolean = true) => {
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(rememberMe);
     } catch (error) {
       console.error("Login failed:", error);
+      throw error;
+    }
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    try {
+      await resetPassword(email);
+      return true;
+    } catch (error) {
+      console.error("Password reset failed:", error);
       throw error;
     }
   };
@@ -70,5 +80,6 @@ export function useAuth() {
     login,
     logout,
     getIdToken,
+    sendPasswordReset,
   };
 }
