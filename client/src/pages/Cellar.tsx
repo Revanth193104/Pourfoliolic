@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Wine, Beer, Martini, Coffee, Search, Star } from "lucide-react";
 import type { Drink } from "@shared/schema";
+import { getIdToken } from "@/lib/firebase";
 
 const drinkTypes = [
   { value: "all", label: "All Types", icon: Coffee },
@@ -41,7 +42,10 @@ export default function Cellar() {
       params.append("sortBy", sortBy);
       params.append("sortOrder", sortOrder);
 
-      const response = await fetch(`/api/drinks?${params.toString()}`);
+      const token = await getIdToken();
+      const response = await fetch(`/api/drinks?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (response.ok) {
         const data = await response.json();
         setDrinks(data);

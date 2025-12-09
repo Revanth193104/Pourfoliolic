@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { motion, Reorder } from "framer-motion";
 import type { Drink } from "@shared/schema";
+import { getIdToken } from "@/lib/firebase";
 
 interface Stats {
   totalDrinks: number;
@@ -78,9 +79,12 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = await getIdToken();
+        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+        
         const [statsRes, drinksRes] = await Promise.all([
-          fetch("/api/stats"),
-          fetch("/api/drinks?sortBy=date&sortOrder=desc")
+          fetch("/api/stats", { headers }),
+          fetch("/api/drinks?sortBy=date&sortOrder=desc", { headers })
         ]);
 
         if (statsRes.ok) {
