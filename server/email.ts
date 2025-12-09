@@ -7,7 +7,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
     const userName = firstName || "there";
     
     const { data, error } = await resend.emails.send({
-      from: "Revanth from Pourfoliolic <onboarding@resend.dev>",
+      from: "Revanth from Pourfoliolic <hello@pourfoliolic.com>",
       to: email,
       subject: "Welcome to Pourfoliolic — Your Liquid Adventures Await",
       html: `
