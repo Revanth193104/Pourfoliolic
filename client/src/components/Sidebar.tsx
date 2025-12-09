@@ -1,18 +1,23 @@
-
-import { LayoutDashboard, PlusCircle, Wine, Search, User, LogOut } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Wine, Compass, User, LogOut, LogIn } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Sidebar() {
   const [location] = useLocation();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/log", label: "Log Drink", icon: PlusCircle },
-    { href: "/cellar", label: "My Cellar", icon: Wine },
-    { href: "/discovery", label: "Discovery", icon: Search },
-    { href: "/profile", label: "Profile", icon: User },
+    { href: "/", label: "Dashboard", icon: LayoutDashboard, requiresAuth: true },
+    { href: "/log", label: "Log Drink", icon: PlusCircle, requiresAuth: true },
+    { href: "/cellar", label: "My Cellar", icon: Wine, requiresAuth: true },
+    { href: "/explore", label: "Explore", icon: Compass, requiresAuth: false },
+    { href: "/profile", label: "Profile", icon: User, requiresAuth: true },
   ];
+
+  const visibleNavItems = navItems.filter(
+    item => !item.requiresAuth || isAuthenticated
+  );
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card text-card-foreground hidden md:flex fixed left-0 top-0">
@@ -24,9 +29,10 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 px-4 space-y-2">
-        {navItems.map((item) => (
+        {visibleNavItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <div
+              data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer",
                 location === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
@@ -40,43 +46,85 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t">
-        <button className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
-          <LogOut className="h-4 w-4" />
-          Sign Out
-        </button>
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground px-3 py-2">Loading...</div>
+        ) : isAuthenticated && user ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 px-3 py-2">
+              {user.profileImageUrl ? (
+                <img 
+                  src={user.profileImageUrl} 
+                  alt="Profile" 
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                  <User className="h-4 w-4" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate" data-testid="text-user-name">
+                  {user.firstName || user.email || "User"}
+                </p>
+              </div>
+            </div>
+            <a 
+              href="/api/logout"
+              data-testid="button-logout"
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </a>
+          </div>
+        ) : (
+          <a 
+            href="/api/login"
+            data-testid="button-login"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <LogIn className="h-4 w-4" />
+            Sign In
+          </a>
+        )}
       </div>
     </div>
   );
 }
 
 export function MobileNav() {
-    const [location] = useLocation();
-  
-    const navItems = [
-      { href: "/", label: "Home", icon: LayoutDashboard },
-      { href: "/cellar", label: "Cellar", icon: Wine },
-      { href: "/log", label: "Log", icon: PlusCircle },
-      { href: "/discovery", label: "Find", icon: Search },
-      { href: "/profile", label: "Me", icon: User },
-    ];
-  
-    return (
-      <div className="fixed bottom-0 left-0 right-0 border-t bg-background p-2 md:hidden z-50">
-        <nav className="flex justify-around">
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href}>
-              <div
-                className={cn(
-                  "flex flex-col items-center gap-1 rounded-md px-3 py-2 text-xs font-medium transition-colors cursor-pointer",
-                  location === item.href ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.label}
-              </div>
-            </Link>
-          ))}
-        </nav>
-      </div>
-    );
-  }
+  const [location] = useLocation();
+  const { isAuthenticated } = useAuth();
+
+  const navItems = [
+    { href: "/", label: "Home", icon: LayoutDashboard, requiresAuth: true },
+    { href: "/cellar", label: "Cellar", icon: Wine, requiresAuth: true },
+    { href: "/log", label: "Log", icon: PlusCircle, requiresAuth: true },
+    { href: "/explore", label: "Explore", icon: Compass, requiresAuth: false },
+    { href: "/profile", label: "Me", icon: User, requiresAuth: true },
+  ];
+
+  const visibleNavItems = navItems.filter(
+    item => !item.requiresAuth || isAuthenticated
+  );
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 border-t bg-background p-2 md:hidden z-50">
+      <nav className="flex justify-around">
+        {visibleNavItems.map((item) => (
+          <Link key={item.href} href={item.href}>
+            <div
+              className={cn(
+                "flex flex-col items-center gap-1 rounded-md px-3 py-2 text-xs font-medium transition-colors cursor-pointer",
+                location === item.href ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <item.icon className="h-5 w-5" />
+              {item.label}
+            </div>
+          </Link>
+        ))}
+      </nav>
+    </div>
+  );
+}

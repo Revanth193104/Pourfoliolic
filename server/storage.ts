@@ -1,6 +1,6 @@
-import { type User, type InsertUser, type Drink, type InsertDrink, drinks } from "@shared/schema";
+import { type User, type UpsertUser, type Drink, type InsertDrink, drinks, users } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, or, like, sql, gte, lte } from "drizzle-orm";
+import { eq, desc, asc, and, or, like, gte, lte } from "drizzle-orm";
 
 export interface DrinkFilters {
   type?: string;
@@ -13,6 +13,8 @@ export interface DrinkFilters {
   searchQuery?: string;
   startDate?: Date;
   endDate?: Date;
+  userId?: string;
+  publicOnly?: boolean;
 }
 
 export interface DrinkStats {
@@ -25,28 +27,36 @@ export interface DrinkStats {
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<User>;
   
   createDrink(drink: InsertDrink): Promise<Drink>;
   getDrinks(filters?: DrinkFilters, sortBy?: string, sortOrder?: "asc" | "desc"): Promise<Drink[]>;
   getDrinkById(id: string): Promise<Drink | undefined>;
   updateDrink(id: string, drink: Partial<InsertDrink>): Promise<Drink | undefined>;
   deleteDrink(id: string): Promise<boolean>;
-  getDrinkStats(): Promise<DrinkStats>;
+  getDrinkStats(userId?: string): Promise<DrinkStats>;
+  getPublicDrinks(filters?: DrinkFilters, sortBy?: string, sortOrder?: "asc" | "desc"): Promise<Drink[]>;
 }
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    return undefined;
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return undefined;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    throw new Error("Not implemented");
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
   }
 
   async createDrink(drink: InsertDrink): Promise<Drink> {
@@ -58,6 +68,9 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
 
     if (filters) {
+      if (filters.userId) {
+        conditions.push(eq(drinks.userId, filters.userId));
+      }
       if (filters.type) {
         conditions.push(eq(drinks.type, filters.type));
       }
@@ -93,6 +106,9 @@ export class DatabaseStorage implements IStorage {
       if (filters.endDate) {
         conditions.push(lte(drinks.date, filters.endDate));
       }
+      if (filters.publicOnly) {
+        conditions.push(eq(drinks.isPrivate, false));
+      }
     }
 
     let query = db.select().from(drinks);
@@ -108,6 +124,10 @@ export class DatabaseStorage implements IStorage {
     query = query.orderBy(sortOrder === "asc" ? asc(orderByColumn) : desc(orderByColumn)) as any;
 
     return await query;
+  }
+
+  async getPublicDrinks(filters?: DrinkFilters, sortBy: string = "date", sortOrder: "asc" | "desc" = "desc"): Promise<Drink[]> {
+    return this.getDrinks({ ...filters, publicOnly: true }, sortBy, sortOrder);
   }
 
   async getDrinkById(id: string): Promise<Drink | undefined> {
@@ -129,8 +149,18 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getDrinkStats(): Promise<DrinkStats> {
-    const allDrinks = await db.select().from(drinks);
+  async getDrinkStats(userId?: string): Promise<DrinkStats> {
+    const conditions = [];
+    if (userId) {
+      conditions.push(eq(drinks.userId, userId));
+    }
+
+    let query = db.select().from(drinks);
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)!) as any;
+    }
+
+    const allDrinks = await query;
     
     const totalDrinks = allDrinks.length;
     const averageRating = totalDrinks > 0
