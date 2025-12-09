@@ -1,7 +1,51 @@
-import { LayoutDashboard, PlusCircle, Wine, Compass, User, LogOut, LogIn } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Wine, Compass, User, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import type { User as UserType } from "@shared/schema";
+
+function UserSection({ user }: { user: UserType }) {
+  const { logout } = useAuth();
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3 px-3 py-2">
+        {user.profileImageUrl ? (
+          <img 
+            src={user.profileImageUrl} 
+            alt="Profile" 
+            className="h-8 w-8 rounded-full object-cover"
+          />
+        ) : (
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+            <User className="h-4 w-4" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate" data-testid="text-user-name">
+            {user.firstName || user.email || "User"}
+          </p>
+        </div>
+      </div>
+      <button 
+        onClick={handleLogout}
+        data-testid="button-logout"
+        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+      >
+        <LogOut className="h-4 w-4" />
+        Sign Out
+      </button>
+    </div>
+  );
+}
 
 export function Sidebar() {
   const [location] = useLocation();
@@ -49,44 +93,8 @@ export function Sidebar() {
         {isLoading ? (
           <div className="text-sm text-muted-foreground px-3 py-2">Loading...</div>
         ) : isAuthenticated && user ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 px-3 py-2">
-              {user.profileImageUrl ? (
-                <img 
-                  src={user.profileImageUrl} 
-                  alt="Profile" 
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                  <User className="h-4 w-4" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" data-testid="text-user-name">
-                  {user.firstName || user.email || "User"}
-                </p>
-              </div>
-            </div>
-            <a 
-              href="/api/logout"
-              data-testid="button-logout"
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </a>
-          </div>
-        ) : (
-          <a 
-            href="/api/login"
-            data-testid="button-login"
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-          >
-            <LogIn className="h-4 w-4" />
-            Sign In
-          </a>
-        )}
+          <UserSection user={user} />
+        ) : null}
       </div>
     </div>
   );
