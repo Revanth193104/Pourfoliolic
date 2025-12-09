@@ -1,6 +1,7 @@
 import admin from "firebase-admin";
 import type { Express, Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
+import { sendWelcomeEmail } from "./email";
 
 function getPrivateKey(): string {
   let key = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
@@ -100,13 +101,22 @@ export async function getUserFromToken(authHeader: string | undefined) {
     return null;
   }
 
-  await storage.upsertUser({
+  const firstName = decodedToken.name?.split(" ")[0] || null;
+  const email = decodedToken.email || null;
+
+  const { user, isNewUser } = await storage.upsertUser({
     id: decodedToken.uid,
-    email: decodedToken.email || null,
-    firstName: decodedToken.name?.split(" ")[0] || null,
+    email,
+    firstName,
     lastName: decodedToken.name?.split(" ").slice(1).join(" ") || null,
     profileImageUrl: decodedToken.picture || null,
   });
 
-  return await storage.getUser(decodedToken.uid);
+  if (isNewUser && email) {
+    sendWelcomeEmail(email, firstName || "").catch((err) => {
+      console.error("Failed to send welcome email:", err);
+    });
+  }
+
+  return user;
 }

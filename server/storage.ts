@@ -27,7 +27,7 @@ export interface DrinkStats {
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<{ user: User; isNewUser: boolean }>;
   
   createDrink(drink: InsertDrink): Promise<Drink>;
   getDrinks(filters?: DrinkFilters, sortBy?: string, sortOrder?: "asc" | "desc"): Promise<Drink[]>;
@@ -44,7 +44,10 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async upsertUser(userData: UpsertUser): Promise<{ user: User; isNewUser: boolean }> {
+    const existingUser = await this.getUser(userData.id);
+    const isNewUser = !existingUser;
+    
     const [user] = await db
       .insert(users)
       .values(userData)
@@ -56,7 +59,7 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
-    return user;
+    return { user, isNewUser };
   }
 
   async createDrink(drink: InsertDrink): Promise<Drink> {
