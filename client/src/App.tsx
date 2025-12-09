@@ -24,24 +24,24 @@ function Router() {
     );
   }
 
+  if (!isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/" component={Landing} />
+        <Route path="/explore" component={Discovery} />
+        <Route component={Landing} />
+      </Switch>
+    );
+  }
+
   return (
     <Switch>
-      {!isAuthenticated ? (
-        <>
-          <Route path="/" component={Landing} />
-          <Route path="/explore" component={Discovery} />
-          <Route component={Landing} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={Home} />
-          <Route path="/log" component={LogDrink} />
-          <Route path="/cellar" component={Cellar} />
-          <Route path="/explore" component={Discovery} />
-          <Route path="/profile" component={Profile} />
-          <Route component={NotFound} />
-        </>
-      )}
+      <Route path="/" component={Home} />
+      <Route path="/log" component={LogDrink} />
+      <Route path="/cellar" component={Cellar} />
+      <Route path="/explore" component={Discovery} />
+      <Route path="/profile" component={Profile} />
+      <Route component={NotFound} />
     </Switch>
   );
 }
