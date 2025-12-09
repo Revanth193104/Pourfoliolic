@@ -115,6 +115,7 @@ export default function LogDrink() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
+          rating: data.rating.toString(),
           price: data.price ? data.price : undefined,
         }),
       });
