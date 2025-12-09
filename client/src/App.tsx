@@ -1,5 +1,6 @@
 import { Switch, Route } from "wouter";
 import { Sidebar, MobileNav } from "@/components/Sidebar";
+import { PageTransition } from "@/components/PageTransition";
 import Home from "@/pages/Home";
 import LogDrink from "@/pages/LogDrink";
 import Cellar from "@/pages/Cellar";
@@ -28,11 +29,13 @@ function AppLayout() {
     return (
       <div className="min-h-screen bg-background text-foreground font-sans antialiased">
         <main className="container mx-auto p-4 md:p-8 max-w-7xl">
-          <Switch>
-            <Route path="/" component={Landing} />
-            <Route path="/explore" component={Discovery} />
-            <Route component={Landing} />
-          </Switch>
+          <PageTransition>
+            <Switch>
+              <Route path="/" component={Landing} />
+              <Route path="/explore" component={Discovery} />
+              <Route component={Landing} />
+            </Switch>
+          </PageTransition>
         </main>
         <Toaster />
       </div>
@@ -44,14 +47,16 @@ function AppLayout() {
       <Sidebar />
       <div className="flex-1 md:ml-64 pb-16 md:pb-0">
         <main className="container mx-auto p-4 md:p-8 max-w-7xl">
-          <Switch>
-            <Route path="/" component={Home} />
-            <Route path="/log" component={LogDrink} />
-            <Route path="/cellar" component={Cellar} />
-            <Route path="/explore" component={Discovery} />
-            <Route path="/profile" component={Profile} />
-            <Route component={NotFound} />
-          </Switch>
+          <PageTransition>
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/log" component={LogDrink} />
+              <Route path="/cellar" component={Cellar} />
+              <Route path="/explore" component={Discovery} />
+              <Route path="/profile" component={Profile} />
+              <Route component={NotFound} />
+            </Switch>
+          </PageTransition>
         </main>
       </div>
       <MobileNav />

@@ -2,6 +2,7 @@ import { LayoutDashboard, PlusCircle, Wine, Compass, User, LogOut } from "lucide
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { NotificationBell } from "@/components/NotificationBell";
 import type { User as UserType } from "@shared/schema";
 import {
   AlertDialog,
@@ -94,10 +95,15 @@ export function Sidebar() {
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-card text-card-foreground hidden md:flex fixed left-0 top-0">
       <div className="p-6">
-        <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-amber-500 to-red-600 bg-clip-text text-transparent">
-          Pourfoliolic
-        </h1>
-        <p className="text-sm text-muted-foreground">Your tasting journey.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-amber-500 to-red-600 bg-clip-text text-transparent">
+              Pourfoliolic
+            </h1>
+            <p className="text-sm text-muted-foreground">Your tasting journey.</p>
+          </div>
+          {isAuthenticated && <NotificationBell />}
+        </div>
       </div>
 
       <nav className="flex-1 px-4 space-y-2">
