@@ -1,9 +1,9 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertDrinkSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, getUserFromToken, type AuthenticatedRequest } from "./firebaseAuth";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -11,13 +11,9 @@ export async function registerRoutes(
 ): Promise<Server> {
   await setupAuth(app);
 
-  app.get('/api/auth/user', async (req: any, res) => {
+  app.get('/api/auth/user', async (req, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.claims?.sub) {
-        return res.json(null);
-      }
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const user = await getUserFromToken(req.headers.authorization);
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -25,9 +21,9 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/drinks", isAuthenticated, async (req: any, res) => {
+  app.post("/api/drinks", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req as AuthenticatedRequest).user!.uid;
       const validatedData = insertDrinkSchema.parse({ ...req.body, userId });
       const drink = await storage.createDrink(validatedData);
       res.status(201).json(drink);
@@ -42,9 +38,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/drinks", isAuthenticated, async (req: any, res) => {
+  app.get("/api/drinks", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req as AuthenticatedRequest).user!.uid;
       const filters: any = { userId };
       
       if (req.query.type) filters.type = req.query.type as string;
@@ -101,9 +97,9 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/drinks/:id", isAuthenticated, async (req: any, res) => {
+  app.put("/api/drinks/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req as AuthenticatedRequest).user!.uid;
       const drink = await storage.getDrinkById(req.params.id);
       
       if (!drink) {
@@ -129,9 +125,9 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/drinks/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/drinks/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req as AuthenticatedRequest).user!.uid;
       const drink = await storage.getDrinkById(req.params.id);
       
       if (!drink) {
@@ -151,9 +147,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/stats", isAuthenticated, async (req: any, res) => {
+  app.get("/api/stats", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req as AuthenticatedRequest).user!.uid;
       const stats = await storage.getDrinkStats(userId);
       res.json(stats);
     } catch (error) {
