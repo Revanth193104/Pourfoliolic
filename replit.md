@@ -65,6 +65,31 @@ The main data entities are:
 - Lucide icons
 - Framer Motion for animations
 
+### Authentication
+- **Provider**: Firebase Authentication with Google Sign-in
+- **Client SDK**: `firebase` package for browser authentication
+- **Admin SDK**: `firebase-admin` for server-side token verification
+- **Auth Flow**: Google popup authentication with `browserLocalPersistence`
+- **Token Verification**: Backend middleware verifies Firebase ID tokens on protected routes
+
+#### Key Files:
+- `client/src/lib/firebase.ts` - Firebase SDK configuration and auth functions
+- `client/src/hooks/useAuth.ts` - React hook for auth state management
+- `client/src/pages/Landing.tsx` - Login page with Google sign-in button
+- `server/firebaseAuth.ts` - Firebase Admin SDK setup and token verification
+
+#### Required Environment Variables:
+- `VITE_FIREBASE_API_KEY` - Firebase API key (client-side)
+- `VITE_FIREBASE_PROJECT_ID` - Firebase project ID (client-side)
+- `VITE_FIREBASE_APP_ID` - Firebase app ID (client-side)
+- `VITE_FIREBASE_MESSAGING_SENDER_ID` - Firebase messaging sender ID (client-side)
+- `VITE_FIREBASE_MEASUREMENT_ID` - Firebase measurement ID (client-side)
+- `FIREBASE_ADMIN_PRIVATE_KEY` - Firebase Admin private key (secret)
+- `FIREBASE_CLIENT_EMAIL` - Firebase Admin client email (secret)
+
+#### Firebase Console Setup:
+The app domain must be added to Firebase Authentication → Authorized domains for Google sign-in to work.
+
 ### Development Tools
 - Replit-specific Vite plugins for development experience
 - Custom meta images plugin for OpenGraph tags

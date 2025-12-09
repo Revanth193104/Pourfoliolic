@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { auth, signInWithGoogle, logOut, getIdToken, handleRedirectResult } from "@/lib/firebase";
+import { auth, signInWithGoogle, logOut, getIdToken } from "@/lib/firebase";
 import type { User as FirebaseUser } from "firebase/auth";
 import type { User } from "@shared/schema";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,33 +11,21 @@ export function useAuth() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    console.log("useAuth: Initializing...");
-    
-    handleRedirectResult().then((redirectUser) => {
-      console.log("useAuth: Redirect result:", redirectUser ? "got user" : "no user from redirect");
-    });
-    
     const unsubscribe = auth.onAuthStateChanged(async (fbUser) => {
-      console.log("useAuth: onAuthStateChanged fired, user:", fbUser ? fbUser.email : "null");
       setFirebaseUser(fbUser);
       
       if (fbUser) {
         try {
-          console.log("useAuth: Getting ID token...");
           const token = await fbUser.getIdToken();
-          console.log("useAuth: Got token, calling /api/auth/user...");
           const response = await fetch("/api/auth/user", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
-          console.log("useAuth: Response status:", response.status);
           if (response.ok) {
             const userData = await response.json();
-            console.log("useAuth: Got user data:", userData);
             setUser(userData);
           } else {
-            console.log("useAuth: Response not ok");
             setUser(null);
           }
         } catch (error) {
@@ -45,7 +33,6 @@ export function useAuth() {
           setUser(null);
         }
       } else {
-        console.log("useAuth: No Firebase user");
         setUser(null);
       }
       
