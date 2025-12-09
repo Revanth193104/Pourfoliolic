@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { auth, signInWithGoogle, logOut, getIdToken } from "@/lib/firebase";
+import { auth, signInWithGoogle, logOut, getIdToken, handleRedirectResult } from "@/lib/firebase";
 import type { User as FirebaseUser } from "firebase/auth";
 import type { User } from "@shared/schema";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,6 +11,8 @@ export function useAuth() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    handleRedirectResult();
+    
     const unsubscribe = auth.onAuthStateChanged(async (fbUser) => {
       setFirebaseUser(fbUser);
       
