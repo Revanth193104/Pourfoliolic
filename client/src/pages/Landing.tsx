@@ -7,7 +7,7 @@ export default function Landing() {
     <div className="space-y-12 py-8">
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-amber-500 to-red-600 bg-clip-text text-transparent">
-          Libation
+          Pourfoliolic
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Your personal drink tasting journal. Log wines, beers, spirits, and cocktails with detailed tasting notes.

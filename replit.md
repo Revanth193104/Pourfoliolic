@@ -1,8 +1,8 @@
-# Libation - Drink Tracking Application
+# Pourfoliolic - Drink Tracking Application
 
 ## Overview
 
-Libation is a drink tracking and logging application that allows users to catalog their beverage experiences. Users can log wines, beers, spirits, and cocktails with detailed tasting notes, ratings, pricing, and personal context. The application provides a dashboard with statistics, a cellar view for browsing logged drinks, and discovery features for recommendations.
+Pourfoliolic is a drink tracking and logging application that allows users to catalog their beverage experiences. Users can log wines, beers, spirits, and cocktails with detailed tasting notes, ratings, pricing, and personal context. The application provides a dashboard with statistics, a cellar view for browsing logged drinks, and discovery features for recommendations.
 
 ## User Preferences
 

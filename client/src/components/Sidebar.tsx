@@ -23,9 +23,9 @@ export function Sidebar() {
     <div className="flex h-screen w-64 flex-col border-r bg-card text-card-foreground hidden md:flex fixed left-0 top-0">
       <div className="p-6">
         <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-amber-500 to-red-600 bg-clip-text text-transparent">
-          Libation
+          Pourfoliolic
         </h1>
-        <p className="text-sm text-muted-foreground">The discerning palate.</p>
+        <p className="text-sm text-muted-foreground">Your tasting journey.</p>
       </div>
 
       <nav className="flex-1 px-4 space-y-2">
