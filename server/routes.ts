@@ -161,5 +161,165 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/cocktails", async (req, res) => {
+    try {
+      const { search, category, ingredient } = req.query;
+      let url = "https://www.thecocktaildb.com/api/json/v1/1/";
+      let isFilterEndpoint = false;
+      
+      if (search) {
+        url += `search.php?s=${encodeURIComponent(search as string)}`;
+      } else if (ingredient) {
+        url += `filter.php?i=${encodeURIComponent(ingredient as string)}`;
+        isFilterEndpoint = true;
+      } else if (category) {
+        url += `filter.php?c=${encodeURIComponent(category as string)}`;
+        isFilterEndpoint = true;
+      } else {
+        url += "search.php?s=";
+      }
+
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      const cocktails = (data.drinks || []).map((drink: any) => ({
+        id: drink.idDrink,
+        name: drink.strDrink,
+        category: isFilterEndpoint ? (category as string) : (drink.strCategory || "Cocktail"),
+        type: "cocktail",
+        imageUrl: drink.strDrinkThumb,
+        instructions: drink.strInstructions || null,
+        glass: drink.strGlass || null,
+        ingredients: isFilterEndpoint ? [] : [
+          drink.strIngredient1, drink.strIngredient2, drink.strIngredient3,
+          drink.strIngredient4, drink.strIngredient5, drink.strIngredient6,
+          drink.strIngredient7, drink.strIngredient8, drink.strIngredient9,
+          drink.strIngredient10, drink.strIngredient11, drink.strIngredient12,
+          drink.strIngredient13, drink.strIngredient14, drink.strIngredient15
+        ].filter(Boolean),
+        measures: isFilterEndpoint ? [] : [
+          drink.strMeasure1, drink.strMeasure2, drink.strMeasure3,
+          drink.strMeasure4, drink.strMeasure5, drink.strMeasure6,
+          drink.strMeasure7, drink.strMeasure8, drink.strMeasure9,
+          drink.strMeasure10, drink.strMeasure11, drink.strMeasure12,
+          drink.strMeasure13, drink.strMeasure14, drink.strMeasure15
+        ].filter(Boolean),
+        isAlcoholic: isFilterEndpoint ? true : (drink.strAlcoholic === "Alcoholic"),
+        isPartialData: isFilterEndpoint,
+      }));
+
+      res.json(cocktails);
+    } catch (error) {
+      console.error("Error fetching cocktails:", error);
+      res.status(500).json({ error: "Failed to fetch cocktails" });
+    }
+  });
+
+  app.get("/api/cocktails/random", async (req, res) => {
+    try {
+      const response = await fetch("https://www.thecocktaildb.com/api/json/v1/1/random.php");
+      const data = await response.json();
+      const drink = data.drinks?.[0];
+      
+      if (!drink) {
+        res.status(404).json({ error: "No cocktail found" });
+        return;
+      }
+
+      res.json({
+        id: drink.idDrink,
+        name: drink.strDrink,
+        category: drink.strCategory || "Cocktail",
+        type: "cocktail",
+        imageUrl: drink.strDrinkThumb,
+        instructions: drink.strInstructions,
+        glass: drink.strGlass,
+        ingredients: [
+          drink.strIngredient1, drink.strIngredient2, drink.strIngredient3,
+          drink.strIngredient4, drink.strIngredient5, drink.strIngredient6,
+          drink.strIngredient7, drink.strIngredient8, drink.strIngredient9,
+          drink.strIngredient10, drink.strIngredient11, drink.strIngredient12,
+          drink.strIngredient13, drink.strIngredient14, drink.strIngredient15
+        ].filter(Boolean),
+        measures: [
+          drink.strMeasure1, drink.strMeasure2, drink.strMeasure3,
+          drink.strMeasure4, drink.strMeasure5, drink.strMeasure6,
+          drink.strMeasure7, drink.strMeasure8, drink.strMeasure9,
+          drink.strMeasure10, drink.strMeasure11, drink.strMeasure12,
+          drink.strMeasure13, drink.strMeasure14, drink.strMeasure15
+        ].filter(Boolean),
+        isAlcoholic: drink.strAlcoholic === "Alcoholic",
+      });
+    } catch (error) {
+      console.error("Error fetching random cocktail:", error);
+      res.status(500).json({ error: "Failed to fetch random cocktail" });
+    }
+  });
+
+  app.get("/api/cocktails/categories", async (req, res) => {
+    try {
+      const response = await fetch("https://www.thecocktaildb.com/api/json/v1/1/list.php?c=list");
+      const data = await response.json();
+      const categories = (data.drinks || []).map((d: any) => d.strCategory);
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  app.get("/api/cocktails/ingredients", async (req, res) => {
+    try {
+      const response = await fetch("https://www.thecocktaildb.com/api/json/v1/1/list.php?i=list");
+      const data = await response.json();
+      const ingredients = (data.drinks || []).map((d: any) => d.strIngredient1);
+      res.json(ingredients);
+    } catch (error) {
+      console.error("Error fetching ingredients:", error);
+      res.status(500).json({ error: "Failed to fetch ingredients" });
+    }
+  });
+
+  app.get("/api/cocktails/:id", async (req, res) => {
+    try {
+      const response = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=${req.params.id}`);
+      const data = await response.json();
+      const drink = data.drinks?.[0];
+      
+      if (!drink) {
+        res.status(404).json({ error: "Cocktail not found" });
+        return;
+      }
+
+      res.json({
+        id: drink.idDrink,
+        name: drink.strDrink,
+        category: drink.strCategory || "Cocktail",
+        type: "cocktail",
+        imageUrl: drink.strDrinkThumb,
+        instructions: drink.strInstructions,
+        glass: drink.strGlass,
+        ingredients: [
+          drink.strIngredient1, drink.strIngredient2, drink.strIngredient3,
+          drink.strIngredient4, drink.strIngredient5, drink.strIngredient6,
+          drink.strIngredient7, drink.strIngredient8, drink.strIngredient9,
+          drink.strIngredient10, drink.strIngredient11, drink.strIngredient12,
+          drink.strIngredient13, drink.strIngredient14, drink.strIngredient15
+        ].filter(Boolean),
+        measures: [
+          drink.strMeasure1, drink.strMeasure2, drink.strMeasure3,
+          drink.strMeasure4, drink.strMeasure5, drink.strMeasure6,
+          drink.strMeasure7, drink.strMeasure8, drink.strMeasure9,
+          drink.strMeasure10, drink.strMeasure11, drink.strMeasure12,
+          drink.strMeasure13, drink.strMeasure14, drink.strMeasure15
+        ].filter(Boolean),
+        isAlcoholic: drink.strAlcoholic === "Alcoholic",
+      });
+    } catch (error) {
+      console.error("Error fetching cocktail:", error);
+      res.status(500).json({ error: "Failed to fetch cocktail" });
+    }
+  });
+
   return httpServer;
 }
