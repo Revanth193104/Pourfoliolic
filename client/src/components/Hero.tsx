@@ -22,17 +22,16 @@ export default function Hero() {
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <h2 className="text-primary font-medium tracking-wide mb-4 uppercase text-sm">
-            Design Engineer & Developer
+            Revanth Mendu
           </h2>
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold tracking-tight text-foreground mb-6">
-            Building digital <br />
+            Full Stack <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">
-              experiences.
+              Engineer.
             </span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            I craft accessible, pixel-perfect, and performant web interfaces 
-            that blend deep technical expertise with refined visual design.
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
+            Building scalable, resilient, and maintainable software with <span className="text-foreground font-semibold">Go</span>, <span className="text-foreground font-semibold">Cloud Native</span> technologies, and distributed systems.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -40,7 +39,7 @@ export default function Hero() {
               href="#projects"
               className="px-8 py-3 rounded-full bg-foreground text-background font-medium hover:bg-foreground/90 transition-colors"
             >
-              View Work
+              View Projects
             </a>
             <a
               href="#contact"
