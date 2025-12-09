@@ -89,16 +89,21 @@ export async function isAuthenticated(
 }
 
 export async function getUserFromToken(authHeader: string | undefined) {
+  console.log("getUserFromToken called, hasAuthHeader:", !!authHeader);
   if (!authHeader?.startsWith("Bearer ")) {
+    console.log("No Bearer token found");
     return null;
   }
 
   const token = authHeader.split("Bearer ")[1];
+  console.log("Verifying token...");
   const decodedToken = await verifyFirebaseToken(token);
 
   if (!decodedToken) {
+    console.log("Token verification failed");
     return null;
   }
+  console.log("Token verified for user:", decodedToken.uid);
 
   await storage.upsertUser({
     id: decodedToken.uid,
