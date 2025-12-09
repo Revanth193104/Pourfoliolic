@@ -12,7 +12,21 @@ import {
   type User 
 } from "firebase/auth";
 
-const firebaseConfig = {
+declare global {
+  interface Window {
+    FIREBASE_CONFIG?: {
+      apiKey: string;
+      authDomain: string;
+      projectId: string;
+      storageBucket: string;
+      messagingSenderId: string;
+      appId: string;
+      measurementId: string;
+    };
+  }
+}
+
+const firebaseConfig = window.FIREBASE_CONFIG || {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
