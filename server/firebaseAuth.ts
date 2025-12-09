@@ -2,14 +2,50 @@ import admin from "firebase-admin";
 import type { Express, Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 
+function getPrivateKey(): string {
+  let key = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+  if (!key) {
+    throw new Error("FIREBASE_ADMIN_PRIVATE_KEY is not set");
+  }
+  
+  console.log("Key length:", key.length);
+  console.log("Key starts with:", key.substring(0, 50));
+  console.log("Contains literal backslash-n:", key.includes('\\n'));
+  console.log("Contains actual newline:", key.includes('\n'));
+  
+  key = key.trim();
+  
+  if (key.startsWith('"') && key.endsWith('"')) {
+    key = key.slice(1, -1);
+  }
+  
+  key = key.split(String.raw`\n`).join('\n');
+  
+  if (!key.includes('\n') && key.includes('-----BEGIN')) {
+    key = key
+      .replace(/-----BEGIN PRIVATE KEY-----/, '-----BEGIN PRIVATE KEY-----\n')
+      .replace(/-----END PRIVATE KEY-----/, '\n-----END PRIVATE KEY-----')
+      .replace(/(.{64})/g, '$1\n')
+      .replace(/\n\n/g, '\n');
+  }
+  
+  console.log("Processed key starts with:", key.substring(0, 80));
+  
+  return key;
+}
+
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-      clientEmail: `firebase-adminsdk-fbsvc@${process.env.VITE_FIREBASE_PROJECT_ID}.iam.gserviceaccount.com`,
-      privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+        clientEmail: `firebase-adminsdk-fbsvc@${process.env.VITE_FIREBASE_PROJECT_ID}.iam.gserviceaccount.com`,
+        privateKey: getPrivateKey(),
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to initialize Firebase Admin:", error);
+  }
 }
 
 export interface AuthenticatedRequest extends Request {
