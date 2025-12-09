@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { getIdToken } from "@/lib/firebase";
 
 const drinkTypes = [
   { id: "wine", label: "Wine", icon: Wine },
@@ -110,9 +111,13 @@ export default function LogDrink() {
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     try {
+      const token = await getIdToken();
       const response = await fetch("/api/drinks", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           ...data,
           rating: data.rating.toString(),
