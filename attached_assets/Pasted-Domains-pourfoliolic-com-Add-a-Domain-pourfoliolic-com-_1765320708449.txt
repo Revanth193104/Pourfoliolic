@@ -1,0 +1,140 @@
+Domains / pourfoliolic.com
+
+Add a Domain
+pourfoliolic.com
+Status
+External domain
+Nameserver 1
+ns1.bluehost.com
+Nameserver 2
+ns2.bluehost.com
+Connections
+
+Maximize the potential of your domain by connecting to services.
+
+Add Services
+
+card-image
+Website
+
+Connect your domain to a Website or Hosting plan to start building your online presence.
+
+Connected
+To switch sites,
+unassign below
+card-image
+Professional Email
+
+Boost credibility of your brand with an email that matches your domain. Easily add additional users, storage and more.
+
+1 available services
+Connected Services
+WordPress service
+Manage Advanced DNS Records
+Advanced DNS allows you to manage your DNS records (A, AAAA, MX, CNAME, TXT, SRC, NS and CAA Records) for individual services, such as changing IP addresses, or modifying an email delivery address. Learn more
+
+Caution: Only advanced users should make updates to their Advanced DNS Manager. Changes made to these settings may cause you to lose access to your existing email and websites.
+
+Note: It may take up to 24-48 hours for DNS changes to fully take effect.
+
+Type
+Host Record
+Point To
+TTL
+A
+autodiscover
+50.6.253.74
+hosting
+2 Hours
+A
+cpanel
+50.6.253.74
+hosting
+2 Hours
+A
+ftp
+50.6.253.74
+hosting
+2 Hours
+A
+localhost
+127.0.0.1
+hosting
+2 Hours
+A
+mail
+50.6.253.74
+hosting
+2 Hours
+A
+@
+50.6.253.74
+hosting
+2 Hours
+A
+ssh
+50.6.253.74
+hosting
+2 Hours
+A
+webdisk
+50.6.253.74
+hosting
+2 Hours
+A
+webmail
+50.6.253.74
+hosting
+2 Hours
+CNAME
+imap
+mail.pourfoliolic.com
+email
+1 Hour
+CNAME
+pop
+mail.pourfoliolic.com
+email
+1 Hour
+CNAME
+smtp
+mail.pourfoliolic.com
+email
+1 Hour
+CNAME
+www
+pourfoliolic.com
+hosting
+2 Hours
+MX
+@
+mail.pourfoliolic.com
+email
+1 Hour
+TXT
+default._domainkey
+v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxJaArIhzkYPV4btPVXYymYotJsb1f06s1H6YW1sqBPP9jYwqYi390gXpgAjyYJ7EQYJjYWig1CyXBC7Uid5uBfYloQStYFrQC5IcnG4Kio/0WK5BhxjunXmlUpWQZjwCCzN8U2FKCxlsh42ncEZm4N7Uj3LWS2z7tIbB9EEF4gXXQb5xbzxfWiu49mGSdTiw0fePqOdp5HnNGP84YlbiMyQUEULxfVIzHmF1ogHCD+fW3VCoZ8wg2eowDRcEpk4LH/etcEUZtg2DC07euVvok1razY1MmDcVln2kVfSbpvDYj2J96IyJ6qxisCqWiHS9ZwCIEDyuof+AlUI5j4+YPwIDAQAB;
+email
+1 Hour
+TXT
+@
+v=spf1 a mx include:websitewelcome.com ~all
+email
+1 Hour
+Legal
+|
+Privacy Policy
+|
+Terms of Use
+|
+Cookie Policy
+|
+Dispute Policy
+|
+DMCA Policy
+|
+Do Not Sell or Share My Information
+|
+Report Abuse
+© Copyright 2025 Bluehost.com. All rights reserved.
+All registered trademarks herein are the property of their respective owners.
