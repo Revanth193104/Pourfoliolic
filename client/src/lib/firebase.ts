@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, type User } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, browserLocalPersistence, setPersistence, type User } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -14,11 +14,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
+setPersistence(auth, browserLocalPersistence);
+
 const googleProvider = new GoogleAuthProvider();
 
 export async function signInWithGoogle() {
   try {
-    await signInWithRedirect(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
   } catch (error) {
     console.error("Error signing in with Google:", error);
     throw error;
@@ -26,13 +29,7 @@ export async function signInWithGoogle() {
 }
 
 export async function handleRedirectResult() {
-  try {
-    const result = await getRedirectResult(auth);
-    return result?.user || null;
-  } catch (error) {
-    console.error("Error handling redirect result:", error);
-    return null;
-  }
+  return null;
 }
 
 export async function logOut() {
