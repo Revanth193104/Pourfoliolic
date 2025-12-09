@@ -8,13 +8,21 @@ function getPrivateKey(): string {
     throw new Error("FIREBASE_ADMIN_PRIVATE_KEY is not set");
   }
   
+  console.log("Raw key length:", key.length);
+  console.log("First 60 chars:", JSON.stringify(key.substring(0, 60)));
+  
   key = key.trim();
   
   if (key.startsWith('"') && key.endsWith('"')) {
     key = key.slice(1, -1);
   }
   
-  key = key.split(String.raw`\n`).join('\n');
+  if (key.includes('\\n')) {
+    key = key.replace(/\\n/g, '\n');
+  }
+  
+  console.log("Processed key length:", key.length);
+  console.log("First 60 chars after processing:", JSON.stringify(key.substring(0, 60)));
   
   return key;
 }
