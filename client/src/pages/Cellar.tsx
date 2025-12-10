@@ -250,33 +250,6 @@ export default function Cellar() {
                       <p className="text-xs text-muted-foreground mt-1" data-testid={`text-date-${drink.id}`}>
                         {new Date(drink.date).toLocaleDateString()}
                       </p>
-                      <div className="flex gap-2 mt-3">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/edit/${drink.id}`);
-                          }}
-                          data-testid={`button-edit-${drink.id}`}
-                        >
-                          <Edit className="w-3 h-3 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(drink.id);
-                          }}
-                          data-testid={`button-delete-${drink.id}`}
-                        >
-                          <Trash2 className="w-3 h-3 mr-1" />
-                          Delete
-                        </Button>
-                      </div>
                     </div>
                   </div>
                   {drink.nose && drink.nose.length > 0 && (
@@ -300,6 +273,34 @@ export default function Cellar() {
                       </div>
                     </div>
                   )}
+                  <div className="flex gap-2 mt-4 pt-4 border-t">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/edit/${drink.id}`);
+                      }}
+                      data-testid={`button-edit-${drink.id}`}
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(drink.id);
+                      }}
+                      data-testid={`button-delete-${drink.id}`}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );
