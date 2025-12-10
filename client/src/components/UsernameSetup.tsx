@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Check, X, Loader2 } from "lucide-react";
+import { getIdToken } from "@/lib/firebase";
 
 interface UsernameSetupProps {
   open: boolean;
@@ -36,7 +37,9 @@ export default function UsernameSetup({ open, onComplete }: UsernameSetupProps) 
 
     const debounce = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/username/check/${encodeURIComponent(username)}`);
+        const response = await fetch(`/api/username/check/${encodeURIComponent(username)}`, {
+          credentials: "include",
+        });
         if (response.ok) {
           const data = await response.json();
           setIsAvailable(data.available);
@@ -57,10 +60,17 @@ export default function UsernameSetup({ open, onComplete }: UsernameSetupProps) 
 
     setIsSubmitting(true);
     try {
+      const token = await getIdToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
       const response = await fetch("/api/username/set", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ username }),
+        credentials: "include",
       });
 
       if (response.ok) {
