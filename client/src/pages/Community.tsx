@@ -74,11 +74,28 @@ const getUserInitial = (user: { username?: string | null; firstName?: string | n
   return "U";
 };
 
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 10000): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    throw error;
+  }
+};
+
 export default function Community() {
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const [drinks, setDrinks] = useState<DrinkWithUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDrink, setSelectedDrink] = useState<DrinkWithUser | null>(null);
   const [trendingFlavors, setTrendingFlavors] = useState<TrendingFlavor[]>([]);
@@ -213,20 +230,38 @@ export default function Community() {
 
   const fetchPublicDrinks = async () => {
     try {
+      setError(null);
       const params = new URLSearchParams();
       if (searchQuery) params.set("searchQuery", searchQuery);
       params.set("sortBy", "date");
       params.set("sortOrder", "desc");
 
-      const response = await fetch(`/api/community/feed?${params}`);
+      const response = await fetchWithTimeout(`/api/community/feed?${params}`);
       if (response.ok) {
         const data = await response.json();
         setDrinks(data);
+      } else {
+        throw new Error('Failed to load feed');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch public drinks:", error);
+      setError(error.message || "Failed to load community feed. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRetry = () => {
+    setLoading(true);
+    setError(null);
+    fetchPublicDrinks();
+    fetchTrendingFlavors();
+    fetchFeaturedDrinks();
+    if (isAuthenticated) {
+      fetchSuggestedUsers();
+      fetchFollowers();
+      fetchFollowing();
+      fetchFollowRequests();
     }
   };
 
@@ -511,6 +546,21 @@ export default function Community() {
             <div className="text-center py-12 text-muted-foreground">
               Loading activity...
             </div>
+          ) : error ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <div className="h-12 w-12 mx-auto text-destructive mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <X className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-semibold">Connection issue</h3>
+                <p className="text-muted-foreground mt-2 mb-4">
+                  {error}
+                </p>
+                <Button onClick={handleRetry} data-testid="button-retry">
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
           ) : drinks.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
