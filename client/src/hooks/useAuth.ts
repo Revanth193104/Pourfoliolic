@@ -18,7 +18,7 @@ export function useAuth() {
         try {
           const token = await fbUser.getIdToken();
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
           
           const response = await fetch("/api/auth/user", {
             headers: {
