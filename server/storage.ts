@@ -38,12 +38,19 @@ export interface IStorage {
   getPublicDrinks(filters?: DrinkFilters, sortBy?: string, sortOrder?: "asc" | "desc"): Promise<Drink[]>;
   
   // Community features
-  toggleFollow(followerId: string, followingId: string): Promise<boolean>;
+  sendFollowRequest(followerId: string, followingId: string): Promise<"pending" | "already_following" | "already_pending">;
+  acceptFollowRequest(userId: string, followerId: string): Promise<boolean>;
+  declineFollowRequest(userId: string, followerId: string): Promise<boolean>;
+  removeFollower(userId: string, followerId: string): Promise<boolean>;
+  unfollowUser(followerId: string, followingId: string): Promise<boolean>;
   isFollowing(followerId: string, followingId: string): Promise<boolean>;
+  getFollowStatus(followerId: string, followingId: string): Promise<"none" | "pending" | "accepted">;
   getFollowers(userId: string): Promise<User[]>;
   getFollowing(userId: string): Promise<User[]>;
   getFollowersCount(userId: string): Promise<number>;
   getFollowingCount(userId: string): Promise<number>;
+  getPendingFollowRequests(userId: string): Promise<(User & { requestedAt: Date | null })[]>;
+  getPendingFollowRequestsCount(userId: string): Promise<number>;
   
   toggleCheers(drinkId: string, userId: string): Promise<boolean>;
   hasCheered(drinkId: string, userId: string): Promise<boolean>;
@@ -54,7 +61,7 @@ export interface IStorage {
   
   getTrendingFlavors(): Promise<{ flavor: string; count: number }[]>;
   getFeaturedDrinks(): Promise<Drink[]>;
-  getSuggestedUsers(userId: string): Promise<(User & { drinksCount: number; isFollowing: boolean })[]>;
+  getSuggestedUsers(userId: string): Promise<(User & { drinksCount: number; followStatus: "none" | "pending" | "accepted" })[]>;
   getCommunityFeed(userId?: string): Promise<(Drink & { user: User; cheersCount: number; hasCheered: boolean; comments: (Comment & { user: User })[] })[]>;
 }
 
@@ -211,31 +218,86 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Community features
-  async toggleFollow(followerId: string, followingId: string): Promise<boolean> {
+  async sendFollowRequest(followerId: string, followingId: string): Promise<"pending" | "already_following" | "already_pending"> {
     const existing = await db.select().from(follows)
       .where(and(eq(follows.followerId, followerId), eq(follows.followingId, followingId)));
     
     if (existing.length > 0) {
-      await db.delete(follows)
-        .where(and(eq(follows.followerId, followerId), eq(follows.followingId, followingId)));
-      return false;
-    } else {
-      await db.insert(follows).values({ followerId, followingId });
-      return true;
+      if (existing[0].status === "accepted") {
+        return "already_following";
+      }
+      return "already_pending";
     }
+    
+    await db.insert(follows).values({ followerId, followingId, status: "pending" });
+    return "pending";
+  }
+
+  async acceptFollowRequest(userId: string, followerId: string): Promise<boolean> {
+    const result = await db.update(follows)
+      .set({ status: "accepted" })
+      .where(and(
+        eq(follows.followingId, userId),
+        eq(follows.followerId, followerId),
+        eq(follows.status, "pending")
+      ))
+      .returning();
+    return result.length > 0;
+  }
+
+  async declineFollowRequest(userId: string, followerId: string): Promise<boolean> {
+    const result = await db.delete(follows)
+      .where(and(
+        eq(follows.followingId, userId),
+        eq(follows.followerId, followerId),
+        eq(follows.status, "pending")
+      ))
+      .returning();
+    return result.length > 0;
+  }
+
+  async removeFollower(userId: string, followerId: string): Promise<boolean> {
+    const result = await db.delete(follows)
+      .where(and(
+        eq(follows.followingId, userId),
+        eq(follows.followerId, followerId)
+      ))
+      .returning();
+    return result.length > 0;
+  }
+
+  async unfollowUser(followerId: string, followingId: string): Promise<boolean> {
+    const result = await db.delete(follows)
+      .where(and(
+        eq(follows.followerId, followerId),
+        eq(follows.followingId, followingId)
+      ))
+      .returning();
+    return result.length > 0;
   }
 
   async isFollowing(followerId: string, followingId: string): Promise<boolean> {
     const result = await db.select().from(follows)
-      .where(and(eq(follows.followerId, followerId), eq(follows.followingId, followingId)));
+      .where(and(
+        eq(follows.followerId, followerId),
+        eq(follows.followingId, followingId),
+        eq(follows.status, "accepted")
+      ));
     return result.length > 0;
+  }
+
+  async getFollowStatus(followerId: string, followingId: string): Promise<"none" | "pending" | "accepted"> {
+    const result = await db.select().from(follows)
+      .where(and(eq(follows.followerId, followerId), eq(follows.followingId, followingId)));
+    if (result.length === 0) return "none";
+    return result[0].status as "pending" | "accepted";
   }
 
   async getFollowers(userId: string): Promise<User[]> {
     const result = await db.select({ user: users })
       .from(follows)
       .innerJoin(users, eq(follows.followerId, users.id))
-      .where(eq(follows.followingId, userId));
+      .where(and(eq(follows.followingId, userId), eq(follows.status, "accepted")));
     return result.map(r => r.user);
   }
 
@@ -243,19 +305,34 @@ export class DatabaseStorage implements IStorage {
     const result = await db.select({ user: users })
       .from(follows)
       .innerJoin(users, eq(follows.followingId, users.id))
-      .where(eq(follows.followerId, userId));
+      .where(and(eq(follows.followerId, userId), eq(follows.status, "accepted")));
     return result.map(r => r.user);
   }
 
   async getFollowersCount(userId: string): Promise<number> {
     const result = await db.select({ count: count() }).from(follows)
-      .where(eq(follows.followingId, userId));
+      .where(and(eq(follows.followingId, userId), eq(follows.status, "accepted")));
     return result[0]?.count || 0;
   }
 
   async getFollowingCount(userId: string): Promise<number> {
     const result = await db.select({ count: count() }).from(follows)
-      .where(eq(follows.followerId, userId));
+      .where(and(eq(follows.followerId, userId), eq(follows.status, "accepted")));
+    return result[0]?.count || 0;
+  }
+
+  async getPendingFollowRequests(userId: string): Promise<(User & { requestedAt: Date | null })[]> {
+    const result = await db.select({ user: users, createdAt: follows.createdAt })
+      .from(follows)
+      .innerJoin(users, eq(follows.followerId, users.id))
+      .where(and(eq(follows.followingId, userId), eq(follows.status, "pending")))
+      .orderBy(desc(follows.createdAt));
+    return result.map(r => ({ ...r.user, requestedAt: r.createdAt }));
+  }
+
+  async getPendingFollowRequestsCount(userId: string): Promise<number> {
+    const result = await db.select({ count: count() }).from(follows)
+      .where(and(eq(follows.followingId, userId), eq(follows.status, "pending")));
     return result[0]?.count || 0;
   }
 
@@ -330,16 +407,16 @@ export class DatabaseStorage implements IStorage {
       .limit(10);
   }
 
-  async getSuggestedUsers(userId: string): Promise<(User & { drinksCount: number; isFollowing: boolean })[]> {
+  async getSuggestedUsers(userId: string): Promise<(User & { drinksCount: number; followStatus: "none" | "pending" | "accepted" })[]> {
     const allUsers = await db.select().from(users).where(ne(users.id, userId)).limit(10);
     
     const result = await Promise.all(allUsers.map(async (user) => {
       const userDrinks = await db.select({ count: count() }).from(drinks).where(eq(drinks.userId, user.id));
-      const isFollowing = await this.isFollowing(userId, user.id);
+      const followStatus = await this.getFollowStatus(userId, user.id);
       return {
         ...user,
         drinksCount: userDrinks[0]?.count || 0,
-        isFollowing
+        followStatus
       };
     }));
     

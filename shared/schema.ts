@@ -64,6 +64,7 @@ export const follows = pgTable("follows", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   followerId: varchar("follower_id").references(() => users.id).notNull(),
   followingId: varchar("following_id").references(() => users.id).notNull(),
+  status: text("status").notNull().default("pending"), // "pending" or "accepted"
   createdAt: timestamp("created_at").defaultNow(),
 });
 

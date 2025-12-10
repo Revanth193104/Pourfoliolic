@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Wine, Beer, Martini, GlassWater, Star, Search, Users, 
-  Heart, MessageCircle, UserPlus, TrendingUp, Sparkles, Clock
+  Heart, MessageCircle, UserPlus, TrendingUp, Sparkles, Clock,
+  Check, X, UserMinus, Bell
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getIdToken } from "@/lib/firebase";
@@ -55,7 +56,8 @@ interface UserProfile {
   followersCount: number;
   followingCount: number;
   drinksCount: number;
-  isFollowing: boolean;
+  followStatus?: "none" | "pending" | "accepted";
+  isFollowing?: boolean;
 }
 
 const getUserDisplayName = (user: { username?: string | null; firstName?: string | null; lastName?: string | null } | undefined | null): string => {
@@ -89,6 +91,7 @@ export default function Community() {
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [followers, setFollowers] = useState<UserProfile[]>([]);
   const [following, setFollowing] = useState<UserProfile[]>([]);
+  const [followRequests, setFollowRequests] = useState<(UserProfile & { requestedAt?: Date | null })[]>([]);
   const [viewingUser, setViewingUser] = useState<{
     id: string;
     username: string | null;
@@ -125,8 +128,88 @@ export default function Community() {
       fetchSuggestedUsers();
       fetchFollowers();
       fetchFollowing();
+      fetchFollowRequests();
     }
   }, [isAuthenticated]);
+
+  const fetchFollowRequests = async () => {
+    try {
+      const token = await getIdToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const response = await fetch("/api/community/follow-requests", { headers });
+      if (response.ok) {
+        const data = await response.json();
+        setFollowRequests(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch follow requests:", error);
+    }
+  };
+
+  const handleAcceptRequest = async (followerId: string) => {
+    try {
+      const token = await getIdToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const response = await fetch(`/api/community/follow-requests/${followerId}/accept`, {
+        method: "POST",
+        headers,
+      });
+      if (response.ok) {
+        setFollowRequests(followRequests.filter(r => r.id !== followerId));
+        fetchFollowers();
+        toast({
+          title: "Request accepted!",
+          description: "They can now see your activity."
+        });
+      }
+    } catch (error) {
+      console.error("Failed to accept follow request:", error);
+    }
+  };
+
+  const handleDeclineRequest = async (followerId: string) => {
+    try {
+      const token = await getIdToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const response = await fetch(`/api/community/follow-requests/${followerId}/decline`, {
+        method: "POST",
+        headers,
+      });
+      if (response.ok) {
+        setFollowRequests(followRequests.filter(r => r.id !== followerId));
+        toast({
+          title: "Request declined",
+          description: "The follow request has been declined."
+        });
+      }
+    } catch (error) {
+      console.error("Failed to decline follow request:", error);
+    }
+  };
+
+  const handleRemoveFollower = async (followerId: string) => {
+    try {
+      const token = await getIdToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const response = await fetch(`/api/community/followers/${followerId}`, {
+        method: "DELETE",
+        headers,
+      });
+      if (response.ok) {
+        setFollowers(followers.filter(f => f.id !== followerId));
+        toast({
+          title: "Follower removed",
+          description: "They can no longer see your activity."
+        });
+      }
+    } catch (error) {
+      console.error("Failed to remove follower:", error);
+    }
+  };
 
   const fetchPublicDrinks = async () => {
     try {
@@ -315,7 +398,7 @@ export default function Community() {
     }
   };
 
-  const handleFollow = async (userId: string) => {
+  const handleFollow = async (userId: string, currentStatus?: "none" | "pending" | "accepted") => {
     if (!isAuthenticated) {
       toast({
         title: "Sign in required",
@@ -329,33 +412,52 @@ export default function Community() {
       const token = await getIdToken();
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const response = await fetch(`/api/community/follow/${userId}`, {
-        method: "POST",
-        headers,
-      });
-      if (response.ok) {
-        setSuggestedUsers(suggestedUsers.map(u => {
-          if (u.id === userId) {
-            return { ...u, isFollowing: !u.isFollowing };
-          }
-          return u;
-        }));
-        setSearchedUsers(searchedUsers.map(u => {
-          if (u.id === userId) {
-            return { ...u, isFollowing: !u.isFollowing };
-          }
-          return u;
-        }));
-        fetchFollowers();
-        fetchFollowing();
-        toast({
-          title: "Success!",
-          description: "Follow status updated."
+
+      if (currentStatus === "accepted" || currentStatus === "pending") {
+        const response = await fetch(`/api/community/unfollow/${userId}`, {
+          method: "POST",
+          headers,
         });
+        if (response.ok) {
+          updateUserFollowStatus(userId, "none");
+          fetchFollowing();
+          toast({
+            title: currentStatus === "accepted" ? "Unfollowed" : "Request cancelled",
+            description: currentStatus === "accepted" ? "You are no longer following this user." : "Follow request cancelled."
+          });
+        }
+      } else {
+        const response = await fetch(`/api/community/follow/${userId}`, {
+          method: "POST",
+          headers,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          updateUserFollowStatus(userId, data.status);
+          toast({
+            title: "Request sent!",
+            description: "Your follow request has been sent."
+          });
+        }
       }
     } catch (error) {
       console.error("Failed to follow:", error);
     }
+  };
+
+  const updateUserFollowStatus = (userId: string, status: "none" | "pending" | "accepted") => {
+    setSuggestedUsers(suggestedUsers.map(u => {
+      if (u.id === userId) {
+        return { ...u, followStatus: status };
+      }
+      return u;
+    }));
+    setSearchedUsers(searchedUsers.map(u => {
+      if (u.id === userId) {
+        return { ...u, followStatus: status };
+      }
+      return u;
+    }));
   };
 
   const getTypeIcon = (type: string) => {
@@ -680,13 +782,13 @@ export default function Community() {
                         </div>
                       </div>
                       <Button
-                        variant={profile.isFollowing ? "secondary" : "default"}
+                        variant={profile.followStatus === "accepted" ? "secondary" : profile.followStatus === "pending" ? "outline" : "default"}
                         size="sm"
-                        onClick={() => handleFollow(profile.id)}
+                        onClick={() => handleFollow(profile.id, profile.followStatus)}
                         data-testid={`button-follow-search-${profile.id}`}
                       >
                         <UserPlus className="h-4 w-4 mr-1" />
-                        {profile.isFollowing ? "Following" : "Follow"}
+                        {profile.followStatus === "accepted" ? "Following" : profile.followStatus === "pending" ? "Requested" : "Follow"}
                       </Button>
                     </div>
                   ))}
@@ -696,6 +798,53 @@ export default function Community() {
               ) : null}
             </CardContent>
           </Card>
+
+          {isAuthenticated && followRequests.length > 0 && (
+            <Card className="border-orange-200 bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
+                  <Bell className="h-5 w-5" />
+                  Follow Requests ({followRequests.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {followRequests.map((request: any) => (
+                    <div key={request.id} className="flex items-center justify-between">
+                      <div 
+                        className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+                        onClick={() => fetchUserProfile(request.id)}
+                      >
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={request.profileImageUrl || undefined} />
+                          <AvatarFallback>{getUserInitial(request)}</AvatarFallback>
+                        </Avatar>
+                        <p className="font-medium hover:underline">{getUserDisplayName(request)}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleAcceptRequest(request.id)}
+                          data-testid={`button-accept-${request.id}`}
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          Accept
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleDeclineRequest(request.id)}
+                          data-testid={`button-decline-${request.id}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {isAuthenticated && (
             <div className="grid gap-6 md:grid-cols-2">
@@ -712,14 +861,27 @@ export default function Community() {
                       {followers.map((follower: any) => (
                         <div 
                           key={follower.id} 
-                          className="flex items-center gap-3 cursor-pointer hover:opacity-80"
-                          onClick={() => fetchUserProfile(follower.id)}
+                          className="flex items-center justify-between"
                         >
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={follower.profileImageUrl || undefined} />
-                            <AvatarFallback>{getUserInitial(follower)}</AvatarFallback>
-                          </Avatar>
-                          <p className="font-medium hover:underline">{getUserDisplayName(follower)}</p>
+                          <div 
+                            className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+                            onClick={() => fetchUserProfile(follower.id)}
+                          >
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={follower.profileImageUrl || undefined} />
+                              <AvatarFallback>{getUserInitial(follower)}</AvatarFallback>
+                            </Avatar>
+                            <p className="font-medium hover:underline">{getUserDisplayName(follower)}</p>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            className="text-muted-foreground hover:text-destructive"
+                            onClick={() => handleRemoveFollower(follower.id)}
+                            data-testid={`button-remove-follower-${follower.id}`}
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -790,13 +952,13 @@ export default function Community() {
                         </div>
                       </div>
                       <Button
-                        variant={profile.isFollowing ? "secondary" : "default"}
+                        variant={profile.followStatus === "accepted" ? "secondary" : profile.followStatus === "pending" ? "outline" : "default"}
                         size="sm"
-                        onClick={() => handleFollow(profile.id)}
+                        onClick={() => handleFollow(profile.id, profile.followStatus)}
                         data-testid={`button-follow-${profile.id}`}
                       >
                         <UserPlus className="h-4 w-4 mr-1" />
-                        {profile.isFollowing ? "Following" : "Follow"}
+                        {profile.followStatus === "accepted" ? "Following" : profile.followStatus === "pending" ? "Requested" : "Follow"}
                       </Button>
                     </div>
                   ))}

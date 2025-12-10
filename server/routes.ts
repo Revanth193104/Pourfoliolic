@@ -440,11 +440,105 @@ export async function registerRoutes(
         return;
       }
       
-      const isFollowing = await storage.toggleFollow(followerId, userId);
-      res.json({ following: isFollowing });
+      const result = await storage.sendFollowRequest(followerId, userId);
+      res.json({ status: result });
     } catch (error) {
-      console.error("Error toggling follow:", error);
-      res.status(500).json({ error: "Failed to toggle follow" });
+      console.error("Error sending follow request:", error);
+      res.status(500).json({ error: "Failed to send follow request" });
+    }
+  });
+
+  app.post("/api/community/unfollow/:userId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const followerId = (req as AuthenticatedRequest).user!.uid;
+      const { userId } = req.params;
+      
+      await storage.unfollowUser(followerId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error unfollowing user:", error);
+      res.status(500).json({ error: "Failed to unfollow user" });
+    }
+  });
+
+  app.post("/api/community/follow-requests/:followerId/accept", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { followerId } = req.params;
+      
+      const success = await storage.acceptFollowRequest(userId, followerId);
+      if (!success) {
+        res.status(404).json({ error: "Follow request not found" });
+        return;
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error accepting follow request:", error);
+      res.status(500).json({ error: "Failed to accept follow request" });
+    }
+  });
+
+  app.post("/api/community/follow-requests/:followerId/decline", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { followerId } = req.params;
+      
+      const success = await storage.declineFollowRequest(userId, followerId);
+      if (!success) {
+        res.status(404).json({ error: "Follow request not found" });
+        return;
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error declining follow request:", error);
+      res.status(500).json({ error: "Failed to decline follow request" });
+    }
+  });
+
+  app.delete("/api/community/followers/:followerId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { followerId } = req.params;
+      
+      await storage.removeFollower(userId, followerId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing follower:", error);
+      res.status(500).json({ error: "Failed to remove follower" });
+    }
+  });
+
+  app.get("/api/community/follow-requests", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const requests = await storage.getPendingFollowRequests(userId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching follow requests:", error);
+      res.status(500).json({ error: "Failed to fetch follow requests" });
+    }
+  });
+
+  app.get("/api/community/follow-requests/count", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const count = await storage.getPendingFollowRequestsCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching follow requests count:", error);
+      res.status(500).json({ error: "Failed to fetch follow requests count" });
+    }
+  });
+
+  app.get("/api/community/follow-status/:userId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const currentUserId = (req as AuthenticatedRequest).user!.uid;
+      const { userId } = req.params;
+      const status = await storage.getFollowStatus(currentUserId, userId);
+      res.json({ status });
+    } catch (error) {
+      console.error("Error fetching follow status:", error);
+      res.status(500).json({ error: "Failed to fetch follow status" });
     }
   });
 

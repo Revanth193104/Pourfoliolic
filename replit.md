@@ -34,8 +34,29 @@ The server uses a storage abstraction layer (`IStorage` interface) implemented b
 - **Validation**: Zod schemas generated from Drizzle schemas via `drizzle-zod`
 
 The main data entities are:
-- `users`: Basic user accounts with username/password
+- `users`: Basic user accounts with username, profile info, and Firebase auth integration
 - `drinks`: Full drink entries with name, maker, type, rating, tasting notes (nose, palate, finish), price, location, pairings, and privacy settings
+- `follows`: User relationships with status field ("pending" or "accepted") for follow request approval system
+- `cheers`: Likes on drinks from users
+- `comments`: User comments on drink entries
+- `circles`: Tasting circles/micro-communities (planned feature)
+
+### Community Features
+
+#### Follow Request System
+- When a user tries to follow someone, it creates a pending follow request
+- The target user can accept or decline the follow request
+- Accepted follows allow the follower to see the user's activity
+- Users can also remove existing followers
+
+#### API Endpoints for Follow Requests:
+- `POST /api/community/follow/:userId` - Send follow request
+- `POST /api/community/unfollow/:userId` - Cancel request or unfollow
+- `GET /api/community/follow-requests` - Get pending follow requests
+- `POST /api/community/follow-requests/:followerId/accept` - Accept request
+- `POST /api/community/follow-requests/:followerId/decline` - Decline request
+- `DELETE /api/community/followers/:followerId` - Remove a follower
+- `GET /api/community/follow-status/:userId` - Check follow status (none/pending/accepted)
 
 ### API Structure
 - `POST /api/drinks` - Create new drink entry
