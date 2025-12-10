@@ -28,15 +28,14 @@ export default function CocktailLibrary() {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const nonAlcoholicCategories = ["Coffee / Tea", "Cocoa", "Soft Drink", "Other / Unknown"];
+  const specialCategories = [
+    { value: "coffee-liqueur", label: "Coffee Liqueur Cocktails", isIngredient: true }
+  ];
   
   useEffect(() => {
     fetch("/api/cocktails/categories")
       .then(res => res.json())
-      .then((cats: string[]) => {
-        const alcoholicOnly = cats.filter(cat => !nonAlcoholicCategories.includes(cat));
-        setCategories(alcoholicOnly);
-      })
+      .then(setCategories)
       .catch(console.error);
   }, []);
 
@@ -46,13 +45,18 @@ export default function CocktailLibrary() {
       try {
         const params = new URLSearchParams();
         if (cocktailSearch) params.set("search", cocktailSearch);
-        if (selectedCategory !== "all") params.set("category", selectedCategory);
+        
+        const specialCat = specialCategories.find(c => c.value === selectedCategory);
+        if (specialCat?.isIngredient) {
+          params.set("ingredient", "Kahlua");
+        } else if (selectedCategory !== "all") {
+          params.set("category", selectedCategory);
+        }
 
         const response = await fetch(`/api/cocktails?${params}`);
         if (response.ok) {
           const data = await response.json();
-          const filtered = data.filter((c: Cocktail) => c.isAlcoholic !== false);
-          setCocktails(filtered);
+          setCocktails(data);
         }
       } catch (error) {
         console.error("Failed to fetch cocktails:", error);
@@ -111,11 +115,16 @@ export default function CocktailLibrary() {
         </div>
 
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full md:w-48" data-testid="select-cocktail-category">
+          <SelectTrigger className="w-full md:w-56" data-testid="select-cocktail-category">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
+            {specialCategories.map((cat) => (
+              <SelectItem key={cat.value} value={cat.value} className="text-amber-600 font-medium">
+                {cat.label}
+              </SelectItem>
+            ))}
             {categories.map((cat) => (
               <SelectItem key={cat} value={cat}>{cat}</SelectItem>
             ))}
