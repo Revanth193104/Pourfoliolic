@@ -12,21 +12,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { motion, Reorder, AnimatePresence } from "framer-motion";
+import { motion, Reorder } from "framer-motion";
 import type { Drink } from "@shared/schema";
 import { getIdToken } from "@/lib/firebase";
-
-const INTRO_MESSAGES = [
-  "Look who's getting drunk again! 🍷",
-  "Back for more, are we? 🍺",
-  "The liver called... it's filing a complaint 😅",
-  "Another day, another drink to log! 🥂",
-  "Your taste buds await, connoisseur! 🍸",
-  "Time to pour some knowledge! 🥃",
-  "Cheers to another tasting session! 🍾",
-];
-
-const INTRO_SHOWN_KEY = "pourfoliolic_intro_shown";
 
 interface Stats {
   totalDrinks: number;
@@ -87,23 +75,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [widgets, setWidgets] = useState<WidgetConfig[]>(loadWidgetConfig);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [showIntro, setShowIntro] = useState(() => {
-    const lastShown = sessionStorage.getItem(INTRO_SHOWN_KEY);
-    return !lastShown;
-  });
-  const [introMessage] = useState(() => 
-    INTRO_MESSAGES[Math.floor(Math.random() * INTRO_MESSAGES.length)]
-  );
-
-  useEffect(() => {
-    if (showIntro) {
-      sessionStorage.setItem(INTRO_SHOWN_KEY, "true");
-      const timer = setTimeout(() => {
-        setShowIntro(false);
-      }, 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [showIntro]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -411,50 +382,12 @@ export default function Home() {
   };
 
   return (
-    <>
-      <AnimatePresence>
-        {showIntro && (
-          <motion.div
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-background"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
-          >
-            <motion.div
-              className="text-center px-8"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 1.1, opacity: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            >
-              <motion.div
-                className="text-6xl mb-6"
-                animate={{ rotate: [0, -10, 10, -10, 0] }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                🥂
-              </motion.div>
-              <motion.h1
-                className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent"
-                initial={{ y: 20 }}
-                animate={{ y: 0 }}
-                transition={{ delay: 0.2 }}
-                data-testid="text-intro-message"
-              >
-                {introMessage}
-              </motion.h1>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight" data-testid="text-dashboard-title">Dashboard</h2>
-            <p className="text-muted-foreground">Welcome back to your tasting journal.</p>
-          </div>
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight" data-testid="text-dashboard-title">Dashboard</h2>
+          <p className="text-muted-foreground">Welcome back to your tasting journal.</p>
+        </div>
         <div className="flex items-center gap-2">
           <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
             <SheetTrigger asChild>
@@ -502,14 +435,13 @@ export default function Home() {
         </div>
       </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {statWidgets.map(w => renderStatWidget(w.id))}
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          {largeWidgets.map(w => renderLargeWidget(w.id))}
-        </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {statWidgets.map(w => renderStatWidget(w.id))}
       </div>
-    </>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        {largeWidgets.map(w => renderLargeWidget(w.id))}
+      </div>
+    </div>
   );
 }
