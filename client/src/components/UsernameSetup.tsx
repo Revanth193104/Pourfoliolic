@@ -7,7 +7,7 @@ import { Check, X, Loader2 } from "lucide-react";
 
 interface UsernameSetupProps {
   open: boolean;
-  onComplete: (username: string) => void;
+  onComplete: () => void;
 }
 
 export default function UsernameSetup({ open, onComplete }: UsernameSetupProps) {
@@ -64,7 +64,7 @@ export default function UsernameSetup({ open, onComplete }: UsernameSetupProps) 
       });
 
       if (response.ok) {
-        onComplete(username);
+        onComplete();
       } else {
         const data = await response.json();
         setError(data.error || "Failed to set username");
@@ -129,6 +129,16 @@ export default function UsernameSetup({ open, onComplete }: UsernameSetupProps) 
             ) : (
               "Continue"
             )}
+          </Button>
+
+          <Button 
+            type="button"
+            variant="ghost"
+            className="w-full text-muted-foreground"
+            onClick={onComplete}
+            data-testid="button-skip-username"
+          >
+            Skip for now
           </Button>
         </form>
       </DialogContent>
