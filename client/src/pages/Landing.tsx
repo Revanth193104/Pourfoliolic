@@ -65,12 +65,17 @@ export default function Landing() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-8">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-amber-500 to-red-600 bg-clip-text text-transparent">
+    <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-8 relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-orange-500/5 pointer-events-none" />
+      <div className="absolute top-20 left-1/4 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
+      
+      <div className="text-center space-y-4 relative z-10">
+        <div className="text-6xl mb-4">🍷</div>
+        <h1 className="text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
           Pourfoliolic
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-lg text-muted-foreground">
           Your personal drink tasting journal
         </p>
       </div>

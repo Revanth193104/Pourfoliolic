@@ -112,8 +112,9 @@ function AppLayout() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background text-foreground font-sans antialiased">
-        <main className="container mx-auto p-4 md:p-8 max-w-7xl">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/10 text-foreground font-sans antialiased relative">
+        <div className="absolute inset-0 bg-gradient-to-t from-orange-500/5 via-transparent to-transparent pointer-events-none" />
+        <main className="container mx-auto p-4 md:p-8 max-w-7xl relative z-10">
           <PageTransition>
             <Switch>
               <Route path="/" component={Landing} />
@@ -128,10 +129,11 @@ function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex font-sans antialiased">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/5 text-foreground flex font-sans antialiased">
       <Sidebar />
-      <div className="flex-1 md:ml-64 pb-16 md:pb-0">
-        <main className="container mx-auto p-4 md:p-8 max-w-7xl">
+      <div className="flex-1 md:ml-64 pb-16 md:pb-0 relative">
+        <div className="absolute inset-0 bg-gradient-to-t from-orange-500/3 via-transparent to-transparent pointer-events-none" />
+        <main className="container mx-auto p-4 md:p-8 max-w-7xl relative z-10">
           <PageTransition>
             <Switch>
               <Route path="/" component={Home} />
