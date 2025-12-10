@@ -27,8 +27,6 @@ const INTRO_MESSAGES = [
   "Cheers to another tasting session! 🍾",
 ];
 
-const INTRO_SHOWN_KEY = "pourfoliolic_intro_shown";
-
 function IntroSplash({ onComplete }: { onComplete: () => void }) {
   const [introMessage] = useState(() => 
     INTRO_MESSAGES[Math.floor(Math.random() * INTRO_MESSAGES.length)]
@@ -128,24 +126,37 @@ function AppLayout() {
   );
 }
 
-function App() {
-  const [showIntro, setShowIntro] = useState(() => {
-    const lastShown = sessionStorage.getItem(INTRO_SHOWN_KEY);
-    return !lastShown;
-  });
+function AppWithIntro() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [showIntro, setShowIntro] = useState(false);
+  const [hasShownIntro, setHasShownIntro] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated && !isLoading && !hasShownIntro) {
+      setShowIntro(true);
+      setHasShownIntro(true);
+    }
+  }, [isAuthenticated, isLoading, hasShownIntro]);
 
   const handleIntroComplete = () => {
-    sessionStorage.setItem(INTRO_SHOWN_KEY, "true");
     setShowIntro(false);
   };
 
   return (
+    <>
+      <AnimatePresence>
+        {showIntro && <IntroSplash onComplete={handleIntroComplete} />}
+      </AnimatePresence>
+      <AppLayout />
+    </>
+  );
+}
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AnimatePresence>
-          {showIntro && <IntroSplash onComplete={handleIntroComplete} />}
-        </AnimatePresence>
-        <AppLayout />
+        <AppWithIntro />
       </TooltipProvider>
     </QueryClientProvider>
   );
