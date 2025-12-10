@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Mail, LogOut, Edit2, Check, X, Loader2, AtSign } from "lucide-react";
 
 export default function Profile() {
-  const { user, isLoading, refetchUser } = useAuth();
+  const { user, isLoading, refetchUser, logout } = useAuth();
   const { toast } = useToast();
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState("");
@@ -90,8 +90,13 @@ export default function Profile() {
     }
   };
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      await logout();
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   if (isLoading) {
