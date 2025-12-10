@@ -57,3 +57,70 @@ export const insertDrinkSchema = createInsertSchema(drinks).omit({
 
 export type InsertDrink = z.infer<typeof insertDrinkSchema>;
 export type Drink = typeof drinks.$inferSelect;
+
+// Follows table for user relationships
+export const follows = pgTable("follows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  followerId: varchar("follower_id").references(() => users.id).notNull(),
+  followingId: varchar("following_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Follow = typeof follows.$inferSelect;
+
+// Cheers (likes) for drinks
+export const cheers = pgTable("cheers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  drinkId: varchar("drink_id").references(() => drinks.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Cheer = typeof cheers.$inferSelect;
+
+// Comments on drinks
+export const comments = pgTable("comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  drinkId: varchar("drink_id").references(() => drinks.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertCommentSchema = createInsertSchema(comments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type Comment = typeof comments.$inferSelect;
+
+// Tasting Circles (micro-communities)
+export const circles = pgTable("circles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url"),
+  creatorId: varchar("creator_id").references(() => users.id).notNull(),
+  isPrivate: boolean("is_private").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertCircleSchema = createInsertSchema(circles).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCircle = z.infer<typeof insertCircleSchema>;
+export type Circle = typeof circles.$inferSelect;
+
+// Circle members
+export const circleMembers = pgTable("circle_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  circleId: varchar("circle_id").references(() => circles.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  role: text("role").default("member"), // "admin" or "member"
+  joinedAt: timestamp("joined_at").defaultNow(),
+});
+
+export type CircleMember = typeof circleMembers.$inferSelect;

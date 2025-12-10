@@ -6,7 +6,8 @@ import Home from "@/pages/Home";
 import LogDrink from "@/pages/LogDrink";
 import EditDrink from "@/pages/EditDrink";
 import Cellar from "@/pages/Cellar";
-import Discovery from "@/pages/Discovery";
+import CocktailLibrary from "@/pages/CocktailLibrary";
+import Community from "@/pages/Community";
 import Profile from "@/pages/Profile";
 import Landing from "@/pages/Landing";
 import NotFound from "@/pages/not-found";
@@ -118,7 +119,8 @@ function AppLayout() {
           <PageTransition>
             <Switch>
               <Route path="/" component={Landing} />
-              <Route path="/explore" component={Discovery} />
+              <Route path="/cocktails" component={CocktailLibrary} />
+              <Route path="/community" component={Community} />
               <Route component={Landing} />
             </Switch>
           </PageTransition>
@@ -140,7 +142,8 @@ function AppLayout() {
               <Route path="/log" component={LogDrink} />
               <Route path="/edit/:id" component={EditDrink} />
               <Route path="/cellar" component={Cellar} />
-              <Route path="/explore" component={Discovery} />
+              <Route path="/cocktails" component={CocktailLibrary} />
+              <Route path="/community" component={Community} />
               <Route path="/profile" component={Profile} />
               <Route component={NotFound} />
             </Switch>

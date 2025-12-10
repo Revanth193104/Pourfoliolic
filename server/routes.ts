@@ -355,5 +355,98 @@ export async function registerRoutes(
     }
   });
 
+  // Community API routes
+  app.get("/api/community/feed", async (req, res) => {
+    try {
+      const userId = (req as any).user?.uid;
+      const feed = await storage.getCommunityFeed(userId);
+      res.json(feed);
+    } catch (error) {
+      console.error("Error fetching community feed:", error);
+      res.status(500).json({ error: "Failed to fetch community feed" });
+    }
+  });
+
+  app.get("/api/community/trending", async (req, res) => {
+    try {
+      const trending = await storage.getTrendingFlavors();
+      res.json(trending);
+    } catch (error) {
+      console.error("Error fetching trending flavors:", error);
+      res.status(500).json({ error: "Failed to fetch trending flavors" });
+    }
+  });
+
+  app.get("/api/community/featured", async (req, res) => {
+    try {
+      const featured = await storage.getFeaturedDrinks();
+      res.json(featured);
+    } catch (error) {
+      console.error("Error fetching featured drinks:", error);
+      res.status(500).json({ error: "Failed to fetch featured drinks" });
+    }
+  });
+
+  app.get("/api/community/suggested-users", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const suggested = await storage.getSuggestedUsers(userId);
+      res.json(suggested);
+    } catch (error) {
+      console.error("Error fetching suggested users:", error);
+      res.status(500).json({ error: "Failed to fetch suggested users" });
+    }
+  });
+
+  app.post("/api/community/cheers/:drinkId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { drinkId } = req.params;
+      const isCheered = await storage.toggleCheers(drinkId, userId);
+      res.json({ cheered: isCheered });
+    } catch (error) {
+      console.error("Error toggling cheers:", error);
+      res.status(500).json({ error: "Failed to toggle cheers" });
+    }
+  });
+
+  app.post("/api/community/comments/:drinkId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { drinkId } = req.params;
+      const { content } = req.body;
+      
+      if (!content || typeof content !== "string") {
+        res.status(400).json({ error: "Comment content is required" });
+        return;
+      }
+      
+      const comment = await storage.addComment(drinkId, userId, content);
+      const user = await storage.getUser(userId);
+      res.json({ ...comment, user });
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      res.status(500).json({ error: "Failed to add comment" });
+    }
+  });
+
+  app.post("/api/community/follow/:userId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const followerId = (req as AuthenticatedRequest).user!.uid;
+      const { userId } = req.params;
+      
+      if (followerId === userId) {
+        res.status(400).json({ error: "Cannot follow yourself" });
+        return;
+      }
+      
+      const isFollowing = await storage.toggleFollow(followerId, userId);
+      res.json({ following: isFollowing });
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+      res.status(500).json({ error: "Failed to toggle follow" });
+    }
+  });
+
   return httpServer;
 }

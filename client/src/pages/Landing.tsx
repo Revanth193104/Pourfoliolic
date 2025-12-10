@@ -4,8 +4,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { Martini, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -157,6 +158,24 @@ export default function Landing() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="flex flex-col items-center gap-3 mt-8 relative z-10">
+        <p className="text-sm text-muted-foreground">Or explore without signing in:</p>
+        <div className="flex gap-4">
+          <Link href="/cocktails">
+            <Button variant="outline" className="gap-2" data-testid="link-cocktail-library">
+              <Martini className="h-4 w-4" />
+              Cocktail Library
+            </Button>
+          </Link>
+          <Link href="/community">
+            <Button variant="outline" className="gap-2" data-testid="link-community">
+              <Users className="h-4 w-4" />
+              Community
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

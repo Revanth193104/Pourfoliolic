@@ -1,6 +1,6 @@
-import { type User, type UpsertUser, type Drink, type InsertDrink, drinks, users } from "@shared/schema";
+import { type User, type UpsertUser, type Drink, type InsertDrink, drinks, users, follows, cheers, comments, type Comment } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, or, like, gte, lte } from "drizzle-orm";
+import { eq, desc, asc, and, or, like, gte, lte, sql, ne, count } from "drizzle-orm";
 
 export interface DrinkFilters {
   type?: string;
@@ -36,6 +36,24 @@ export interface IStorage {
   deleteDrink(id: string): Promise<boolean>;
   getDrinkStats(userId?: string): Promise<DrinkStats>;
   getPublicDrinks(filters?: DrinkFilters, sortBy?: string, sortOrder?: "asc" | "desc"): Promise<Drink[]>;
+  
+  // Community features
+  toggleFollow(followerId: string, followingId: string): Promise<boolean>;
+  isFollowing(followerId: string, followingId: string): Promise<boolean>;
+  getFollowers(userId: string): Promise<User[]>;
+  getFollowing(userId: string): Promise<User[]>;
+  
+  toggleCheers(drinkId: string, userId: string): Promise<boolean>;
+  hasCheered(drinkId: string, userId: string): Promise<boolean>;
+  getCheersCount(drinkId: string): Promise<number>;
+  
+  addComment(drinkId: string, userId: string, content: string): Promise<Comment>;
+  getComments(drinkId: string): Promise<(Comment & { user: User })[]>;
+  
+  getTrendingFlavors(): Promise<{ flavor: string; count: number }[]>;
+  getFeaturedDrinks(): Promise<Drink[]>;
+  getSuggestedUsers(userId: string): Promise<(User & { drinksCount: number; isFollowing: boolean })[]>;
+  getCommunityFeed(userId?: string): Promise<(Drink & { user: User; cheersCount: number; hasCheered: boolean; comments: (Comment & { user: User })[] })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -45,7 +63,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<{ user: User; isNewUser: boolean }> {
-    const existingUser = await this.getUser(userData.id);
+    const existingUser = userData.id ? await this.getUser(userData.id) : undefined;
     const isNewUser = !existingUser;
     
     const [user] = await db
@@ -188,6 +206,158 @@ export class DatabaseStorage implements IStorage {
       favoriteType,
       drinksByType,
     };
+  }
+
+  // Community features
+  async toggleFollow(followerId: string, followingId: string): Promise<boolean> {
+    const existing = await db.select().from(follows)
+      .where(and(eq(follows.followerId, followerId), eq(follows.followingId, followingId)));
+    
+    if (existing.length > 0) {
+      await db.delete(follows)
+        .where(and(eq(follows.followerId, followerId), eq(follows.followingId, followingId)));
+      return false;
+    } else {
+      await db.insert(follows).values({ followerId, followingId });
+      return true;
+    }
+  }
+
+  async isFollowing(followerId: string, followingId: string): Promise<boolean> {
+    const result = await db.select().from(follows)
+      .where(and(eq(follows.followerId, followerId), eq(follows.followingId, followingId)));
+    return result.length > 0;
+  }
+
+  async getFollowers(userId: string): Promise<User[]> {
+    const result = await db.select({ user: users })
+      .from(follows)
+      .innerJoin(users, eq(follows.followerId, users.id))
+      .where(eq(follows.followingId, userId));
+    return result.map(r => r.user);
+  }
+
+  async getFollowing(userId: string): Promise<User[]> {
+    const result = await db.select({ user: users })
+      .from(follows)
+      .innerJoin(users, eq(follows.followingId, users.id))
+      .where(eq(follows.followerId, userId));
+    return result.map(r => r.user);
+  }
+
+  async toggleCheers(drinkId: string, userId: string): Promise<boolean> {
+    const existing = await db.select().from(cheers)
+      .where(and(eq(cheers.drinkId, drinkId), eq(cheers.userId, userId)));
+    
+    if (existing.length > 0) {
+      await db.delete(cheers)
+        .where(and(eq(cheers.drinkId, drinkId), eq(cheers.userId, userId)));
+      return false;
+    } else {
+      await db.insert(cheers).values({ drinkId, userId });
+      return true;
+    }
+  }
+
+  async hasCheered(drinkId: string, userId: string): Promise<boolean> {
+    const result = await db.select().from(cheers)
+      .where(and(eq(cheers.drinkId, drinkId), eq(cheers.userId, userId)));
+    return result.length > 0;
+  }
+
+  async getCheersCount(drinkId: string): Promise<number> {
+    const result = await db.select({ count: count() }).from(cheers)
+      .where(eq(cheers.drinkId, drinkId));
+    return result[0]?.count || 0;
+  }
+
+  async addComment(drinkId: string, userId: string, content: string): Promise<Comment> {
+    const [comment] = await db.insert(comments)
+      .values({ drinkId, userId, content })
+      .returning();
+    return comment;
+  }
+
+  async getComments(drinkId: string): Promise<(Comment & { user: User })[]> {
+    const result = await db.select({
+      comment: comments,
+      user: users
+    })
+      .from(comments)
+      .innerJoin(users, eq(comments.userId, users.id))
+      .where(eq(comments.drinkId, drinkId))
+      .orderBy(asc(comments.createdAt));
+    
+    return result.map(r => ({ ...r.comment, user: r.user }));
+  }
+
+  async getTrendingFlavors(): Promise<{ flavor: string; count: number }[]> {
+    const publicDrinks = await db.select().from(drinks).where(eq(drinks.isPrivate, false));
+    const flavorCounts: Record<string, number> = {};
+    
+    publicDrinks.forEach(drink => {
+      [...(drink.nose || []), ...(drink.palate || [])].forEach(flavor => {
+        if (flavor) {
+          flavorCounts[flavor] = (flavorCounts[flavor] || 0) + 1;
+        }
+      });
+    });
+    
+    return Object.entries(flavorCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([flavor, count]) => ({ flavor, count }));
+  }
+
+  async getFeaturedDrinks(): Promise<Drink[]> {
+    return await db.select().from(drinks)
+      .where(eq(drinks.isPrivate, false))
+      .orderBy(desc(drinks.rating), desc(drinks.date))
+      .limit(10);
+  }
+
+  async getSuggestedUsers(userId: string): Promise<(User & { drinksCount: number; isFollowing: boolean })[]> {
+    const allUsers = await db.select().from(users).where(ne(users.id, userId)).limit(10);
+    
+    const result = await Promise.all(allUsers.map(async (user) => {
+      const userDrinks = await db.select({ count: count() }).from(drinks).where(eq(drinks.userId, user.id));
+      const isFollowing = await this.isFollowing(userId, user.id);
+      return {
+        ...user,
+        drinksCount: userDrinks[0]?.count || 0,
+        isFollowing
+      };
+    }));
+    
+    return result;
+  }
+
+  async getCommunityFeed(userId?: string): Promise<(Drink & { user: User; cheersCount: number; hasCheered: boolean; comments: (Comment & { user: User })[] })[]> {
+    const publicDrinks = await db.select({
+      drink: drinks,
+      user: users
+    })
+      .from(drinks)
+      .innerJoin(users, eq(drinks.userId, users.id))
+      .where(eq(drinks.isPrivate, false))
+      .orderBy(desc(drinks.date))
+      .limit(20);
+    
+    const result = await Promise.all(publicDrinks.map(async (row) => {
+      const cheersCount = await this.getCheersCount(row.drink.id);
+      const hasCheered = userId ? await this.hasCheered(row.drink.id, userId) : false;
+      const drinkComments = await this.getComments(row.drink.id);
+      
+      return {
+        ...row.drink,
+        user: row.user,
+        cheersCount,
+        hasCheered,
+        comments: drinkComments
+      };
+    }));
+    
+    return result;
   }
 }
 
