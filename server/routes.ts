@@ -172,7 +172,45 @@ export async function registerRoutes(
         url += `filter.php?c=${encodeURIComponent(category as string)}`;
         isFilterEndpoint = true;
       } else {
-        url += "search.php?s=";
+        // When no filters, fetch cocktails from multiple letters for variety
+        const letters = ['a', 'm', 'c', 'b', 's', 'g', 't'];
+        const allDrinks: any[] = [];
+        
+        for (const letter of letters) {
+          try {
+            const letterResponse = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?f=${letter}`);
+            const letterData = await letterResponse.json();
+            if (letterData.drinks) {
+              allDrinks.push(...letterData.drinks);
+            }
+          } catch (e) {
+            // Skip failed letters
+          }
+        }
+        
+        const cocktails = allDrinks.slice(0, 24).map((drink: any) => ({
+          id: drink.idDrink,
+          name: drink.strDrink,
+          category: drink.strCategory || "Cocktail",
+          type: "cocktail",
+          imageUrl: drink.strDrinkThumb,
+          instructions: drink.strInstructions,
+          glass: drink.strGlass,
+          ingredients: [
+            drink.strIngredient1, drink.strIngredient2, drink.strIngredient3,
+            drink.strIngredient4, drink.strIngredient5, drink.strIngredient6,
+            drink.strIngredient7, drink.strIngredient8
+          ].filter(Boolean),
+          measures: [
+            drink.strMeasure1, drink.strMeasure2, drink.strMeasure3,
+            drink.strMeasure4, drink.strMeasure5, drink.strMeasure6,
+            drink.strMeasure7, drink.strMeasure8
+          ].filter(Boolean),
+          isAlcoholic: drink.strAlcoholic === "Alcoholic"
+        }));
+        
+        res.json(cocktails);
+        return;
       }
 
       const response = await fetch(url);

@@ -147,7 +147,7 @@ export default function Discovery() {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="cocktails" data-testid="tab-cocktails">
             <Sparkles className="h-4 w-4 mr-2" />
-            Cocktail Database
+            Cocktail Library
           </TabsTrigger>
           <TabsTrigger value="community" data-testid="tab-community">
             <Users className="h-4 w-4 mr-2" />
