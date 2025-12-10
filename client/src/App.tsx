@@ -161,6 +161,7 @@ function AppWithIntro() {
   const { isAuthenticated, isLoading, firebaseUser, user, refetchUser } = useAuth();
   const [showIntro, setShowIntro] = useState(false);
   const [showUsernameSetup, setShowUsernameSetup] = useState(false);
+  const [usernameDismissed, setUsernameDismissed] = useState(false);
   const [wasLoggedIn, setWasLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -168,26 +169,28 @@ function AppWithIntro() {
       const isLoggedIn = !!firebaseUser;
       if (wasLoggedIn === false && isLoggedIn) {
         setShowIntro(true);
+        setUsernameDismissed(false);
       }
       setWasLoggedIn(isLoggedIn);
     }
   }, [firebaseUser, isLoading, wasLoggedIn]);
 
   useEffect(() => {
-    if (isAuthenticated && user && !user.username && !showIntro) {
+    if (isAuthenticated && user && !user.username && !showIntro && !usernameDismissed) {
       setShowUsernameSetup(true);
     }
-  }, [isAuthenticated, user, showIntro]);
+  }, [isAuthenticated, user, showIntro, usernameDismissed]);
 
   const handleIntroComplete = () => {
     setShowIntro(false);
-    if (isAuthenticated && user && !user.username) {
+    if (isAuthenticated && user && !user.username && !usernameDismissed) {
       setShowUsernameSetup(true);
     }
   };
 
   const handleUsernameComplete = () => {
     setShowUsernameSetup(false);
+    setUsernameDismissed(true);
     refetchUser();
   };
 
