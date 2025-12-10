@@ -28,10 +28,15 @@ export default function CocktailLibrary() {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
 
+  const nonAlcoholicCategories = ["Coffee / Tea", "Cocoa", "Soft Drink", "Other / Unknown"];
+  
   useEffect(() => {
     fetch("/api/cocktails/categories")
       .then(res => res.json())
-      .then(setCategories)
+      .then((cats: string[]) => {
+        const alcoholicOnly = cats.filter(cat => !nonAlcoholicCategories.includes(cat));
+        setCategories(alcoholicOnly);
+      })
       .catch(console.error);
   }, []);
 
@@ -46,7 +51,8 @@ export default function CocktailLibrary() {
         const response = await fetch(`/api/cocktails?${params}`);
         if (response.ok) {
           const data = await response.json();
-          setCocktails(data);
+          const filtered = data.filter((c: Cocktail) => c.isAlcoholic !== false);
+          setCocktails(filtered);
         }
       } catch (error) {
         console.error("Failed to fetch cocktails:", error);
