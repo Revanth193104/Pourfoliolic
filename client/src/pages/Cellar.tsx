@@ -3,7 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wine, Beer, Martini, Coffee, Search, Star } from "lucide-react";
+import { Wine, Beer, Martini, Coffee, Search, Star, Edit, Trash2 } from "lucide-react";
+import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 import type { Drink } from "@shared/schema";
 import { getIdToken } from "@/lib/firebase";
 
@@ -16,6 +18,8 @@ const drinkTypes = [
 ];
 
 export default function Cellar() {
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
   const [drinks, setDrinks] = useState<Drink[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,6 +58,34 @@ export default function Cellar() {
       console.error("Failed to fetch drinks:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (drinkId: string) => {
+    if (!confirm("Are you sure you want to delete this drink?")) return;
+    
+    try {
+      const token = await getIdToken();
+      const response = await fetch(`/api/drinks/${drinkId}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Deleted",
+          description: "Drink removed from your cellar.",
+        });
+        fetchDrinks();
+      } else {
+        throw new Error("Failed to delete");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete drink.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -218,6 +250,33 @@ export default function Cellar() {
                       <p className="text-xs text-muted-foreground mt-1" data-testid={`text-date-${drink.id}`}>
                         {new Date(drink.date).toLocaleDateString()}
                       </p>
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/edit/${drink.id}`);
+                          }}
+                          data-testid={`button-edit-${drink.id}`}
+                        >
+                          <Edit className="w-3 h-3 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(drink.id);
+                          }}
+                          data-testid={`button-delete-${drink.id}`}
+                        >
+                          <Trash2 className="w-3 h-3 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   {drink.nose && drink.nose.length > 0 && (

@@ -3,6 +3,7 @@ import { Sidebar, MobileNav } from "@/components/Sidebar";
 import { PageTransition } from "@/components/PageTransition";
 import Home from "@/pages/Home";
 import LogDrink from "@/pages/LogDrink";
+import EditDrink from "@/pages/EditDrink";
 import Cellar from "@/pages/Cellar";
 import Discovery from "@/pages/Discovery";
 import Profile from "@/pages/Profile";
@@ -51,6 +52,7 @@ function AppLayout() {
             <Switch>
               <Route path="/" component={Home} />
               <Route path="/log" component={LogDrink} />
+              <Route path="/edit/:id" component={EditDrink} />
               <Route path="/cellar" component={Cellar} />
               <Route path="/explore" component={Discovery} />
               <Route path="/profile" component={Profile} />
