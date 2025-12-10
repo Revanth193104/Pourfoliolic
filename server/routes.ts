@@ -486,6 +486,36 @@ export async function registerRoutes(
   });
 
   // Username management
+  app.get("/api/community/users/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+      
+      const drinks = await storage.getPublicDrinks({ userId });
+      const followersCount = await storage.getFollowersCount(userId);
+      const followingCount = await storage.getFollowingCount(userId);
+      
+      res.json({
+        id: user.id,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImageUrl: user.profileImageUrl,
+        drinksCount: drinks.length,
+        followersCount,
+        followingCount,
+        drinks,
+      });
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ error: "Failed to fetch user profile" });
+    }
+  });
+
   app.get("/api/username/check/:username", async (req, res) => {
     try {
       const { username } = req.params;

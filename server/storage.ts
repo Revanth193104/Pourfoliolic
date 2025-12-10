@@ -42,6 +42,8 @@ export interface IStorage {
   isFollowing(followerId: string, followingId: string): Promise<boolean>;
   getFollowers(userId: string): Promise<User[]>;
   getFollowing(userId: string): Promise<User[]>;
+  getFollowersCount(userId: string): Promise<number>;
+  getFollowingCount(userId: string): Promise<number>;
   
   toggleCheers(drinkId: string, userId: string): Promise<boolean>;
   hasCheered(drinkId: string, userId: string): Promise<boolean>;
@@ -243,6 +245,18 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(follows.followingId, users.id))
       .where(eq(follows.followerId, userId));
     return result.map(r => r.user);
+  }
+
+  async getFollowersCount(userId: string): Promise<number> {
+    const result = await db.select({ count: count() }).from(follows)
+      .where(eq(follows.followingId, userId));
+    return result[0]?.count || 0;
+  }
+
+  async getFollowingCount(userId: string): Promise<number> {
+    const result = await db.select({ count: count() }).from(follows)
+      .where(eq(follows.followerId, userId));
+    return result[0]?.count || 0;
   }
 
   async toggleCheers(drinkId: string, userId: string): Promise<boolean> {

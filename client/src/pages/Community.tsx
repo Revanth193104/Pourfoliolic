@@ -89,6 +89,33 @@ export default function Community() {
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [followers, setFollowers] = useState<UserProfile[]>([]);
   const [following, setFollowing] = useState<UserProfile[]>([]);
+  const [viewingUser, setViewingUser] = useState<{
+    id: string;
+    username: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    profileImageUrl: string | null;
+    followersCount: number;
+    followingCount: number;
+    drinksCount: number;
+    drinks: DrinkWithUser[];
+  } | null>(null);
+  const [loadingUserProfile, setLoadingUserProfile] = useState(false);
+
+  const fetchUserProfile = async (userId: string) => {
+    setLoadingUserProfile(true);
+    try {
+      const response = await fetch(`/api/community/users/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setViewingUser(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user profile:", error);
+    } finally {
+      setLoadingUserProfile(false);
+    }
+  };
 
   useEffect(() => {
     fetchPublicDrinks();
@@ -398,13 +425,21 @@ export default function Community() {
                 <Card key={drink.id} className="overflow-hidden hover:shadow-md transition-shadow" data-testid={`card-community-drink-${drink.id}`}>
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">
-                      <Avatar className="h-10 w-10">
+                      <Avatar 
+                        className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                        onClick={() => drink.user?.id && fetchUserProfile(drink.user.id)}
+                      >
                         <AvatarImage src={drink.user?.profileImageUrl || undefined} />
                         <AvatarFallback>{getUserInitial(drink.user)}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm">{getUserDisplayName(drink.user)}</span>
+                          <span 
+                            className="font-medium text-sm cursor-pointer hover:underline"
+                            onClick={() => drink.user?.id && fetchUserProfile(drink.user.id)}
+                          >
+                            {getUserDisplayName(drink.user)}
+                          </span>
                           <span className="text-xs text-muted-foreground">shared a tasting</span>
                         </div>
                         <div className="flex items-start gap-4">
@@ -629,13 +664,16 @@ export default function Community() {
                 <div className="space-y-4">
                   {searchedUsers.map((profile) => (
                     <div key={profile.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div 
+                        className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+                        onClick={() => fetchUserProfile(profile.id)}
+                      >
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={profile.profileImageUrl || undefined} />
                           <AvatarFallback>{getUserInitial(profile)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{getUserDisplayName(profile)}</p>
+                          <p className="font-medium hover:underline">{getUserDisplayName(profile)}</p>
                           <p className="text-sm text-muted-foreground">
                             {profile.drinksCount} tastings
                           </p>
@@ -672,12 +710,16 @@ export default function Community() {
                   {followers.length > 0 ? (
                     <div className="space-y-3">
                       {followers.map((follower: any) => (
-                        <div key={follower.id} className="flex items-center gap-3">
+                        <div 
+                          key={follower.id} 
+                          className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+                          onClick={() => fetchUserProfile(follower.id)}
+                        >
                           <Avatar className="h-10 w-10">
                             <AvatarImage src={follower.profileImageUrl || undefined} />
                             <AvatarFallback>{getUserInitial(follower)}</AvatarFallback>
                           </Avatar>
-                          <p className="font-medium">{getUserDisplayName(follower)}</p>
+                          <p className="font-medium hover:underline">{getUserDisplayName(follower)}</p>
                         </div>
                       ))}
                     </div>
@@ -700,12 +742,16 @@ export default function Community() {
                   {following.length > 0 ? (
                     <div className="space-y-3">
                       {following.map((followed: any) => (
-                        <div key={followed.id} className="flex items-center gap-3">
+                        <div 
+                          key={followed.id} 
+                          className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+                          onClick={() => fetchUserProfile(followed.id)}
+                        >
                           <Avatar className="h-10 w-10">
                             <AvatarImage src={followed.profileImageUrl || undefined} />
                             <AvatarFallback>{getUserInitial(followed)}</AvatarFallback>
                           </Avatar>
-                          <p className="font-medium">{getUserDisplayName(followed)}</p>
+                          <p className="font-medium hover:underline">{getUserDisplayName(followed)}</p>
                         </div>
                       ))}
                     </div>
@@ -728,13 +774,16 @@ export default function Community() {
                 <div className="space-y-4">
                   {suggestedUsers.map((profile) => (
                     <div key={profile.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div 
+                        className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+                        onClick={() => fetchUserProfile(profile.id)}
+                      >
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={profile.profileImageUrl || undefined} />
                           <AvatarFallback>{getUserInitial(profile)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{getUserDisplayName(profile)}</p>
+                          <p className="font-medium hover:underline">{getUserDisplayName(profile)}</p>
                           <p className="text-sm text-muted-foreground">
                             {profile.drinksCount} tastings
                           </p>
@@ -766,6 +815,65 @@ export default function Community() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!viewingUser} onOpenChange={(open) => !open && setViewingUser(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={viewingUser?.profileImageUrl || undefined} />
+                <AvatarFallback>{getUserInitial(viewingUser)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold">{getUserDisplayName(viewingUser)}</p>
+                <p className="text-sm text-muted-foreground font-normal">
+                  {viewingUser?.followersCount || 0} followers · {viewingUser?.followingCount || 0} following
+                </p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <h4 className="font-medium text-sm text-muted-foreground">
+              Tastings ({viewingUser?.drinksCount || 0})
+            </h4>
+            {loadingUserProfile ? (
+              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : viewingUser?.drinks && viewingUser.drinks.length > 0 ? (
+              <div className="space-y-3">
+                {viewingUser.drinks.map((drink) => (
+                  <div key={drink.id} className="p-3 rounded-lg border">
+                    <div className="flex items-start gap-3">
+                      <div className="h-12 w-12 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {drink.imageUrl ? (
+                          <img src={drink.imageUrl} alt={drink.name} className="h-full w-full object-cover" />
+                        ) : (
+                          getTypeIcon(drink.type)
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{drink.name}</p>
+                        <p className="text-sm text-muted-foreground truncate">{drink.maker}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">{drink.type}</Badge>
+                          <span className="text-xs flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                            {drink.rating}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No public tastings yet
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
