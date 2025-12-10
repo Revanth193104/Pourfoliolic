@@ -29,16 +29,18 @@ export default function CocktailLibrary() {
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   const specialCategories = [
-    { value: "coffee-liqueur", label: "Coffee Liqueur Cocktails", isIngredient: true },
-    { value: "non-alcoholic", label: "Non-Alcoholic Beverages", isNonAlcoholic: true }
+    { value: "coffee-liqueur", label: "Coffee Liqueur Cocktails", isIngredient: true }
   ];
   
-  const nonAlcoholicSourceCategories = ["Coffee / Tea", "Cocoa", "Soft Drink", "Punch / Party Drink"];
+  const hiddenCategories = ["Coffee / Tea", "Cocoa", "Soft Drink", "Other / Unknown"];
   
   useEffect(() => {
     fetch("/api/cocktails/categories")
       .then(res => res.json())
-      .then(setCategories)
+      .then((cats: string[]) => {
+        const filtered = cats.filter(cat => !hiddenCategories.includes(cat));
+        setCategories(filtered);
+      })
       .catch(console.error);
   }, []);
 
@@ -46,41 +48,20 @@ export default function CocktailLibrary() {
     const fetchCocktails = async () => {
       setLoading(true);
       try {
-        const specialCat = specialCategories.find(c => c.value === selectedCategory);
+        const params = new URLSearchParams();
+        if (cocktailSearch) params.set("search", cocktailSearch);
         
-        if (specialCat?.isNonAlcoholic) {
-          // Fetch non-alcoholic drinks from multiple categories
-          const allNonAlcoholic: Cocktail[] = [];
-          for (const cat of nonAlcoholicSourceCategories) {
-            try {
-              const response = await fetch(`/api/cocktails?category=${encodeURIComponent(cat)}`);
-              if (response.ok) {
-                const data = await response.json();
-                const nonAlc = data.filter((c: Cocktail) => !c.isAlcoholic);
-                allNonAlcoholic.push(...nonAlc);
-              }
-            } catch (e) {}
-          }
-          setCocktails(allNonAlcoholic);
-        } else {
-          const params = new URLSearchParams();
-          if (cocktailSearch) params.set("search", cocktailSearch);
-          
-          if (specialCat?.isIngredient) {
-            params.set("ingredient", "Kahlua");
-          } else if (selectedCategory !== "all") {
-            params.set("category", selectedCategory);
-          }
+        const specialCat = specialCategories.find(c => c.value === selectedCategory);
+        if (specialCat?.isIngredient) {
+          params.set("ingredient", "Kahlua");
+        } else if (selectedCategory !== "all") {
+          params.set("category", selectedCategory);
+        }
 
-          const response = await fetch(`/api/cocktails?${params}`);
-          if (response.ok) {
-            const data = await response.json();
-            // Filter out non-alcoholic drinks from regular categories
-            const filtered = selectedCategory === "all" 
-              ? data.filter((c: Cocktail) => c.isAlcoholic !== false)
-              : data;
-            setCocktails(filtered);
-          }
+        const response = await fetch(`/api/cocktails?${params}`);
+        if (response.ok) {
+          const data = await response.json();
+          setCocktails(data);
         }
       } catch (error) {
         console.error("Failed to fetch cocktails:", error);
