@@ -12,13 +12,16 @@ import {
   Heart, MessageCircle, UserPlus, TrendingUp, Sparkles, Clock
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { getIdToken } from "@/lib/firebase";
 import type { Drink } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 interface DrinkWithUser extends Drink {
   user?: {
     id: string;
+    username: string | null;
     firstName: string | null;
+    lastName: string | null;
     profileImageUrl: string | null;
   };
   cheersCount?: number;
@@ -29,7 +32,9 @@ interface DrinkWithUser extends Drink {
     createdAt: string;
     user: {
       id: string;
+      username: string | null;
       firstName: string | null;
+      lastName: string | null;
       profileImageUrl: string | null;
     };
   }>;
@@ -42,7 +47,9 @@ interface TrendingFlavor {
 
 interface UserProfile {
   id: string;
+  username: string | null;
   firstName: string | null;
+  lastName: string | null;
   profileImageUrl: string | null;
   email: string | null;
   followersCount: number;
@@ -50,6 +57,20 @@ interface UserProfile {
   drinksCount: number;
   isFollowing: boolean;
 }
+
+const getUserDisplayName = (user: { username?: string | null; firstName?: string | null; lastName?: string | null } | undefined | null): string => {
+  if (!user) return "Anonymous";
+  if (user.username) return `@${user.username}`;
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ");
+  return fullName || "Anonymous";
+};
+
+const getUserInitial = (user: { username?: string | null; firstName?: string | null } | undefined | null): string => {
+  if (!user) return "U";
+  if (user.username) return user.username[0].toUpperCase();
+  if (user.firstName) return user.firstName[0].toUpperCase();
+  return "U";
+};
 
 export default function Community() {
   const { isAuthenticated, user } = useAuth();
@@ -125,7 +146,10 @@ export default function Community() {
 
   const fetchSuggestedUsers = async () => {
     try {
-      const response = await fetch("/api/community/suggested-users");
+      const token = await getIdToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const response = await fetch("/api/community/suggested-users", { headers });
       if (response.ok) {
         const data = await response.json();
         setSuggestedUsers(data);
@@ -137,7 +161,10 @@ export default function Community() {
 
   const fetchFollowers = async () => {
     try {
-      const response = await fetch("/api/community/followers");
+      const token = await getIdToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const response = await fetch("/api/community/followers", { headers });
       if (response.ok) {
         const data = await response.json();
         setFollowers(data);
@@ -149,7 +176,10 @@ export default function Community() {
 
   const fetchFollowing = async () => {
     try {
-      const response = await fetch("/api/community/following");
+      const token = await getIdToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const response = await fetch("/api/community/following", { headers });
       if (response.ok) {
         const data = await response.json();
         setFollowing(data);
@@ -200,8 +230,12 @@ export default function Community() {
     }
 
     try {
+      const token = await getIdToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
       const response = await fetch(`/api/community/cheers/${drinkId}`, {
         method: "POST",
+        headers,
       });
       if (response.ok) {
         setDrinks(drinks.map(d => {
@@ -225,9 +259,12 @@ export default function Community() {
 
     setSubmittingComment(true);
     try {
+      const token = await getIdToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
       const response = await fetch(`/api/community/comments/${drinkId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ content: commentText }),
       });
       if (response.ok) {
@@ -262,8 +299,12 @@ export default function Community() {
     }
 
     try {
+      const token = await getIdToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
       const response = await fetch(`/api/community/follow/${userId}`, {
         method: "POST",
+        headers,
       });
       if (response.ok) {
         setSuggestedUsers(suggestedUsers.map(u => {
@@ -272,9 +313,17 @@ export default function Community() {
           }
           return u;
         }));
+        setSearchedUsers(searchedUsers.map(u => {
+          if (u.id === userId) {
+            return { ...u, isFollowing: !u.isFollowing };
+          }
+          return u;
+        }));
+        fetchFollowers();
+        fetchFollowing();
         toast({
           title: "Success!",
-          description: "You are now following this user."
+          description: "Follow status updated."
         });
       }
     } catch (error) {
@@ -351,11 +400,11 @@ export default function Community() {
                     <div className="flex items-start gap-4">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={drink.user?.profileImageUrl || undefined} />
-                        <AvatarFallback>{drink.user?.firstName?.[0] || "U"}</AvatarFallback>
+                        <AvatarFallback>{getUserInitial(drink.user)}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm">{drink.user?.firstName || "Anonymous"}</span>
+                          <span className="font-medium text-sm">{getUserDisplayName(drink.user)}</span>
                           <span className="text-xs text-muted-foreground">shared a tasting</span>
                         </div>
                         <div className="flex items-start gap-4">
@@ -417,10 +466,10 @@ export default function Community() {
                                   <div key={comment.id} className="flex gap-3">
                                     <Avatar className="h-8 w-8">
                                       <AvatarImage src={comment.user?.profileImageUrl || undefined} />
-                                      <AvatarFallback>{comment.user?.firstName?.[0] || "U"}</AvatarFallback>
+                                      <AvatarFallback>{getUserInitial(comment.user)}</AvatarFallback>
                                     </Avatar>
                                     <div>
-                                      <p className="text-sm font-medium">{comment.user?.firstName || "Anonymous"}</p>
+                                      <p className="text-sm font-medium">{getUserDisplayName(comment.user)}</p>
                                       <p className="text-sm text-muted-foreground">{comment.content}</p>
                                     </div>
                                   </div>
@@ -583,23 +632,23 @@ export default function Community() {
                       <div className="flex items-center gap-3">
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={profile.profileImageUrl || undefined} />
-                          <AvatarFallback>{profile.firstName?.[0] || "U"}</AvatarFallback>
+                          <AvatarFallback>{getUserInitial(profile)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{profile.firstName || "User"}</p>
+                          <p className="font-medium">{getUserDisplayName(profile)}</p>
                           <p className="text-sm text-muted-foreground">
                             {profile.drinksCount} tastings
                           </p>
                         </div>
                       </div>
                       <Button
-                        variant="default"
+                        variant={profile.isFollowing ? "secondary" : "default"}
                         size="sm"
                         onClick={() => handleFollow(profile.id)}
                         data-testid={`button-follow-search-${profile.id}`}
                       >
                         <UserPlus className="h-4 w-4 mr-1" />
-                        Follow
+                        {profile.isFollowing ? "Following" : "Follow"}
                       </Button>
                     </div>
                   ))}
@@ -626,9 +675,9 @@ export default function Community() {
                         <div key={follower.id} className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
                             <AvatarImage src={follower.profileImageUrl || undefined} />
-                            <AvatarFallback>{follower.firstName?.[0] || "U"}</AvatarFallback>
+                            <AvatarFallback>{getUserInitial(follower)}</AvatarFallback>
                           </Avatar>
-                          <p className="font-medium">{follower.firstName || "User"}</p>
+                          <p className="font-medium">{getUserDisplayName(follower)}</p>
                         </div>
                       ))}
                     </div>
@@ -654,9 +703,9 @@ export default function Community() {
                         <div key={followed.id} className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
                             <AvatarImage src={followed.profileImageUrl || undefined} />
-                            <AvatarFallback>{followed.firstName?.[0] || "U"}</AvatarFallback>
+                            <AvatarFallback>{getUserInitial(followed)}</AvatarFallback>
                           </Avatar>
-                          <p className="font-medium">{followed.firstName || "User"}</p>
+                          <p className="font-medium">{getUserDisplayName(followed)}</p>
                         </div>
                       ))}
                     </div>
@@ -682,10 +731,10 @@ export default function Community() {
                       <div className="flex items-center gap-3">
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={profile.profileImageUrl || undefined} />
-                          <AvatarFallback>{profile.firstName?.[0] || "U"}</AvatarFallback>
+                          <AvatarFallback>{getUserInitial(profile)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{profile.firstName || "User"}</p>
+                          <p className="font-medium">{getUserDisplayName(profile)}</p>
                           <p className="text-sm text-muted-foreground">
                             {profile.drinksCount} tastings
                           </p>
