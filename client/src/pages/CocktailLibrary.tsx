@@ -137,15 +137,24 @@ export default function CocktailLibrary() {
         </Button>
       </div>
 
-      {selectedCategory === "all" && categories.length > 0 && (
+      {categories.length > 0 && (
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant={selectedCategory === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory("all")}
+            className={selectedCategory === "all" ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0" : ""}
+            data-testid="button-category-all"
+          >
+            All
+          </Button>
           {specialCategories.map((cat) => (
             <Button
               key={cat.value}
-              variant="outline"
+              variant={selectedCategory === cat.value ? "default" : "outline"}
               size="sm"
               onClick={() => setSelectedCategory(cat.value)}
-              className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 hover:from-amber-600 hover:to-orange-600"
+              className={selectedCategory === cat.value ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0" : ""}
               data-testid={`button-category-${cat.value}`}
             >
               {cat.label}
@@ -154,10 +163,10 @@ export default function CocktailLibrary() {
           {categories.map((cat) => (
             <Button
               key={cat}
-              variant="outline"
+              variant={selectedCategory === cat ? "default" : "outline"}
               size="sm"
               onClick={() => setSelectedCategory(cat)}
-              className="hover:bg-primary hover:text-primary-foreground transition-colors"
+              className={selectedCategory === cat ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0" : ""}
               data-testid={`button-category-${cat}`}
             >
               {cat}
