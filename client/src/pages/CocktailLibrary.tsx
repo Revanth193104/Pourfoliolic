@@ -137,6 +137,35 @@ export default function CocktailLibrary() {
         </Button>
       </div>
 
+      {selectedCategory === "all" && categories.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {specialCategories.map((cat) => (
+            <Button
+              key={cat.value}
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedCategory(cat.value)}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 hover:from-amber-600 hover:to-orange-600"
+              data-testid={`button-category-${cat.value}`}
+            >
+              {cat.label}
+            </Button>
+          ))}
+          {categories.map((cat) => (
+            <Button
+              key={cat}
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedCategory(cat)}
+              className="hover:bg-primary hover:text-primary-foreground transition-colors"
+              data-testid={`button-category-${cat}`}
+            >
+              {cat}
+            </Button>
+          ))}
+        </div>
+      )}
+
       {loading ? (
         <div className="text-center py-12 text-muted-foreground" data-testid="text-cocktails-loading">
           Loading cocktails...
