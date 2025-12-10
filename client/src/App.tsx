@@ -118,12 +118,7 @@ function AppLayout() {
         <div className="absolute inset-0 bg-gradient-to-t from-orange-500/5 via-transparent to-transparent pointer-events-none" />
         <main className="container mx-auto p-4 md:p-8 max-w-7xl relative z-10">
           <PageTransition>
-            <Switch>
-              <Route path="/" component={Landing} />
-              <Route path="/cocktails" component={CocktailLibrary} />
-              <Route path="/community" component={Community} />
-              <Route component={Landing} />
-            </Switch>
+            <Landing />
           </PageTransition>
         </main>
         <Toaster />
