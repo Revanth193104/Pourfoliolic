@@ -27,7 +27,7 @@ const INTRO_MESSAGES = [
   "Cheers to another tasting session! 🍾",
 ];
 
-function IntroSplash({ onComplete }: { onComplete: () => void }) {
+function IntroSplash({ onComplete, userName }: { onComplete: () => void; userName?: string }) {
   const [introMessage] = useState(() => 
     INTRO_MESSAGES[Math.floor(Math.random() * INTRO_MESSAGES.length)]
   );
@@ -41,34 +41,56 @@ function IntroSplash({ onComplete }: { onComplete: () => void }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-background"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-br from-background via-background to-purple-950/20"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.4 }}
+      onClick={onComplete}
     >
       <motion.div
-        className="text-center px-8"
+        className="text-center px-8 cursor-pointer"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 1.1, opacity: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
       >
         <motion.div
-          className="text-6xl mb-6"
-          animate={{ rotate: [0, -10, 10, -10, 0] }}
-          transition={{ duration: 0.5, delay: 0.3 }}
+          className="text-7xl mb-6"
+          animate={{ 
+            rotate: [0, -15, 15, -10, 10, 0],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{ duration: 0.8, delay: 0.2 }}
         >
           🥂
         </motion.div>
+        {userName && (
+          <motion.p
+            className="text-lg text-muted-foreground mb-2"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            Welcome back, {userName}!
+          </motion.p>
+        )}
         <motion.h1
-          className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent"
-          initial={{ y: 20 }}
-          animate={{ y: 0 }}
-          transition={{ delay: 0.2 }}
+          className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent mb-8"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.15 }}
           data-testid="text-intro-message"
         >
           {introMessage}
         </motion.h1>
+        <motion.p
+          className="text-sm text-muted-foreground/60"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          Tap anywhere to skip
+        </motion.p>
       </motion.div>
     </motion.div>
   );
@@ -127,18 +149,19 @@ function AppLayout() {
 }
 
 function AppWithIntro() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, firebaseUser, user } = useAuth();
   const [showIntro, setShowIntro] = useState(false);
-  const [wasAuthenticated, setWasAuthenticated] = useState<boolean | null>(null);
+  const [wasLoggedIn, setWasLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!isLoading) {
-      if (wasAuthenticated === false && isAuthenticated) {
+      const isLoggedIn = !!firebaseUser;
+      if (wasLoggedIn === false && isLoggedIn) {
         setShowIntro(true);
       }
-      setWasAuthenticated(isAuthenticated);
+      setWasLoggedIn(isLoggedIn);
     }
-  }, [isAuthenticated, isLoading, wasAuthenticated]);
+  }, [firebaseUser, isLoading, wasLoggedIn]);
 
   const handleIntroComplete = () => {
     setShowIntro(false);
@@ -147,7 +170,7 @@ function AppWithIntro() {
   return (
     <>
       <AnimatePresence>
-        {showIntro && <IntroSplash onComplete={handleIntroComplete} />}
+        {showIntro && <IntroSplash onComplete={handleIntroComplete} userName={user?.firstName || undefined} />}
       </AnimatePresence>
       <AppLayout />
     </>
