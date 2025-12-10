@@ -17,19 +17,29 @@ export function useAuth() {
       if (fbUser) {
         try {
           const token = await fbUser.getIdToken();
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          
           const response = await fetch("/api/auth/user", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
+            signal: controller.signal,
           });
+          clearTimeout(timeoutId);
+          
           if (response.ok) {
             const userData = await response.json();
             setUser(userData);
           } else {
             setUser(null);
           }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            console.error("Auth request timed out - database may be slow");
+          } else {
+            console.error("Error fetching user data:", error);
+          }
           setUser(null);
         }
       } else {
