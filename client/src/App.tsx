@@ -32,41 +32,36 @@ function IntroSplash({ onComplete, userName }: { onComplete: () => void; userNam
     INTRO_MESSAGES[Math.floor(Math.random() * INTRO_MESSAGES.length)]
   );
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onComplete();
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
-
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-br from-background via-background to-purple-950/20"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-br from-purple-900/90 via-background to-orange-900/30 cursor-pointer"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
       onClick={onComplete}
     >
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent" />
+      
       <motion.div
-        className="text-center px-8 cursor-pointer"
+        className="text-center px-8 relative z-10"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 1.1, opacity: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
         <motion.div
-          className="text-7xl mb-6"
+          className="text-8xl mb-8"
           animate={{ 
             rotate: [0, -15, 15, -10, 10, 0],
-            scale: [1, 1.1, 1]
+            scale: [1, 1.2, 1]
           }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 1, delay: 0.2, repeat: Infinity, repeatDelay: 2 }}
         >
           🥂
         </motion.div>
         {userName && (
           <motion.p
-            className="text-lg text-muted-foreground mb-2"
+            className="text-xl text-white/80 mb-3 font-medium"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -75,7 +70,7 @@ function IntroSplash({ onComplete, userName }: { onComplete: () => void; userNam
           </motion.p>
         )}
         <motion.h1
-          className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent mb-8"
+          className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent mb-10"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.15 }}
@@ -83,14 +78,22 @@ function IntroSplash({ onComplete, userName }: { onComplete: () => void; userNam
         >
           {introMessage}
         </motion.h1>
-        <motion.p
-          className="text-sm text-muted-foreground/60"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+        <motion.div
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20 transition-colors"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          Tap anywhere to skip
-        </motion.p>
+          <span>Tap to continue</span>
+          <motion.span
+            animate={{ x: [0, 5, 0] }}
+            transition={{ duration: 1, repeat: Infinity }}
+          >
+            →
+          </motion.span>
+        </motion.div>
       </motion.div>
     </motion.div>
   );
