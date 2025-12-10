@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
 import { z } from "zod";
-import { Wine, Beer, Martini, GlassWater, Star, Plus, X } from "lucide-react";
+import { Wine, Beer, Martini, GlassWater, Star, Plus, X, Camera, Link, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,9 @@ export default function LogDrink() {
   const [palateInput, setPalateInput] = useState("");
   const [pairingInput, setPairingInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageMode, setImageMode] = useState<"camera" | "url">("camera");
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -106,6 +109,35 @@ export default function LogDrink() {
 
   const removePairing = (index: number) => {
     setValue("pairings", pairings.filter((_, i) => i !== index));
+  };
+
+  const handleImageCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Image too large",
+          description: "Please select an image under 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setCapturedImage(base64);
+        setValue("imageUrl", base64);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearImage = () => {
+    setCapturedImage(null);
+    setValue("imageUrl", "");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const onSubmit = async (data: FormData) => {
@@ -229,14 +261,84 @@ export default function LogDrink() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl">Image URL</Label>
-              <Input
-                id="imageUrl"
-                data-testid="input-imageUrl"
-                {...register("imageUrl")}
-                placeholder="https://example.com/image.jpg"
-              />
+            <div className="space-y-3">
+              <Label>Photo</Label>
+              <div className="flex gap-2 mb-3">
+                <Button
+                  type="button"
+                  variant={imageMode === "camera" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setImageMode("camera")}
+                  data-testid="button-image-camera"
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Take Photo
+                </Button>
+                <Button
+                  type="button"
+                  variant={imageMode === "url" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setImageMode("url")}
+                  data-testid="button-image-url"
+                >
+                  <Link className="w-4 h-4 mr-2" />
+                  URL
+                </Button>
+              </div>
+              
+              {imageMode === "camera" ? (
+                <div className="space-y-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleImageCapture}
+                    className="hidden"
+                    data-testid="input-camera"
+                  />
+                  {capturedImage ? (
+                    <div className="relative inline-block">
+                      <img
+                        src={capturedImage}
+                        alt="Captured drink"
+                        className="w-48 h-48 object-cover rounded-lg border"
+                        data-testid="img-preview"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-8 w-8"
+                        onClick={clearImage}
+                        data-testid="button-clear-image"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-32 border-dashed"
+                      onClick={() => fileInputRef.current?.click()}
+                      data-testid="button-capture"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <Camera className="w-8 h-8 text-muted-foreground" />
+                        <span className="text-muted-foreground">Tap to capture or select photo</span>
+                      </div>
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <Input
+                  id="imageUrl"
+                  data-testid="input-imageUrl"
+                  {...register("imageUrl")}
+                  placeholder="https://example.com/image.jpg"
+                />
+              )}
             </div>
           </CardContent>
         </Card>
