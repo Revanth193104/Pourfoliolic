@@ -1,11 +1,94 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { User, Mail, LogOut } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { User, Mail, LogOut, Edit2, Check, X, Loader2, AtSign } from "lucide-react";
 
 export default function Profile() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, refetchUser } = useAuth();
+  const { toast } = useToast();
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
+  const [isSavingUsername, setIsSavingUsername] = useState(false);
+
+  useEffect(() => {
+    if (user?.username) {
+      setNewUsername(user.username);
+    }
+  }, [user?.username]);
+
+  useEffect(() => {
+    if (!newUsername || newUsername.length < 3 || newUsername === user?.username) {
+      setIsUsernameAvailable(null);
+      return;
+    }
+
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+    if (!usernameRegex.test(newUsername)) {
+      setIsUsernameAvailable(null);
+      return;
+    }
+
+    setIsCheckingUsername(true);
+    const debounce = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/username/check/${encodeURIComponent(newUsername)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setIsUsernameAvailable(data.available);
+        }
+      } catch (e) {
+        console.error("Failed to check username:", e);
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(debounce);
+  }, [newUsername, user?.username]);
+
+  const handleSaveUsername = async () => {
+    if (!isUsernameAvailable && newUsername !== user?.username) return;
+    
+    setIsSavingUsername(true);
+    try {
+      const response = await fetch("/api/username/set", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: newUsername }),
+      });
+
+      if (response.ok) {
+        await refetchUser();
+        setIsEditingUsername(false);
+        toast({
+          title: "Username updated!",
+          description: `Your username is now @${newUsername}`,
+        });
+      } else {
+        const data = await response.json();
+        toast({
+          title: "Error",
+          description: data.error || "Failed to update username",
+          variant: "destructive",
+        });
+      }
+    } catch (e) {
+      toast({
+        title: "Error",
+        description: "Failed to update username",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingUsername(false);
+    }
+  };
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
@@ -60,13 +143,78 @@ export default function Profile() {
             </Avatar>
             <div>
               <h3 className="text-xl font-semibold" data-testid="text-profile-name">{displayName}</h3>
+              {user.username && (
+                <p className="text-muted-foreground flex items-center gap-1" data-testid="text-profile-username">
+                  <AtSign className="h-4 w-4" />
+                  {user.username}
+                </p>
+              )}
               {user.email && (
-                <p className="text-muted-foreground flex items-center gap-1" data-testid="text-profile-email">
-                  <Mail className="h-4 w-4" />
+                <p className="text-muted-foreground flex items-center gap-1 text-sm" data-testid="text-profile-email">
+                  <Mail className="h-3 w-3" />
                   {user.email}
                 </p>
               )}
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label>Username</Label>
+            {isEditingUsername ? (
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
+                  <Input
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value.toLowerCase())}
+                    className="pl-8 pr-10"
+                    placeholder="your_username"
+                    data-testid="input-edit-username"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {isCheckingUsername && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    {!isCheckingUsername && isUsernameAvailable === true && <Check className="h-4 w-4 text-green-500" />}
+                    {!isCheckingUsername && isUsernameAvailable === false && <X className="h-4 w-4 text-red-500" />}
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleSaveUsername}
+                  disabled={isSavingUsername || (isUsernameAvailable === false)}
+                  data-testid="button-save-username"
+                >
+                  {isSavingUsername ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditingUsername(false);
+                    setNewUsername(user.username || "");
+                  }}
+                  data-testid="button-cancel-username"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="flex-1 p-2 rounded border bg-muted/50">
+                  {user.username ? `@${user.username}` : "No username set"}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsEditingUsername(true)}
+                  data-testid="button-edit-username"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            {!isCheckingUsername && isUsernameAvailable === false && isEditingUsername && (
+              <p className="text-sm text-red-500">This username is already taken</p>
+            )}
           </div>
 
           <div className="pt-4 border-t">

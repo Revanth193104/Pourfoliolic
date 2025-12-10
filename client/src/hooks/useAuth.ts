@@ -72,6 +72,25 @@ export function useAuth() {
     }
   };
 
+  const refetchUser = async () => {
+    if (firebaseUser) {
+      try {
+        const token = await firebaseUser.getIdToken();
+        const response = await fetch("/api/auth/user", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error("Error refetching user:", error);
+      }
+    }
+  };
+
   return {
     user,
     firebaseUser,
@@ -81,5 +100,6 @@ export function useAuth() {
     logout,
     getIdToken,
     sendPasswordReset,
+    refetchUser,
   };
 }

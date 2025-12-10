@@ -11,6 +11,7 @@ import Community from "@/pages/Community";
 import Profile from "@/pages/Profile";
 import Landing from "@/pages/Landing";
 import NotFound from "@/pages/not-found";
+import UsernameSetup from "@/components/UsernameSetup";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -157,8 +158,9 @@ function AppLayout() {
 }
 
 function AppWithIntro() {
-  const { isAuthenticated, isLoading, firebaseUser, user } = useAuth();
+  const { isAuthenticated, isLoading, firebaseUser, user, refetchUser } = useAuth();
   const [showIntro, setShowIntro] = useState(false);
+  const [showUsernameSetup, setShowUsernameSetup] = useState(false);
   const [wasLoggedIn, setWasLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -171,8 +173,22 @@ function AppWithIntro() {
     }
   }, [firebaseUser, isLoading, wasLoggedIn]);
 
+  useEffect(() => {
+    if (isAuthenticated && user && !user.username && !showIntro) {
+      setShowUsernameSetup(true);
+    }
+  }, [isAuthenticated, user, showIntro]);
+
   const handleIntroComplete = () => {
     setShowIntro(false);
+    if (isAuthenticated && user && !user.username) {
+      setShowUsernameSetup(true);
+    }
+  };
+
+  const handleUsernameComplete = () => {
+    setShowUsernameSetup(false);
+    refetchUser();
   };
 
   return (
@@ -180,6 +196,7 @@ function AppWithIntro() {
       <AnimatePresence>
         {showIntro && <IntroSplash onComplete={handleIntroComplete} userName={user?.firstName || undefined} />}
       </AnimatePresence>
+      <UsernameSetup open={showUsernameSetup} onComplete={handleUsernameComplete} />
       <AppLayout />
     </>
   );

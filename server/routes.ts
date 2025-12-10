@@ -485,5 +485,48 @@ export async function registerRoutes(
     }
   });
 
+  // Username management
+  app.get("/api/username/check/:username", async (req, res) => {
+    try {
+      const { username } = req.params;
+      const isAvailable = await storage.isUsernameAvailable(username);
+      res.json({ available: isAvailable });
+    } catch (error) {
+      console.error("Error checking username:", error);
+      res.status(500).json({ error: "Failed to check username" });
+    }
+  });
+
+  app.post("/api/username/set", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { username } = req.body;
+      
+      if (!username || typeof username !== "string") {
+        res.status(400).json({ error: "Username is required" });
+        return;
+      }
+      
+      // Validate username format
+      const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+      if (!usernameRegex.test(username)) {
+        res.status(400).json({ error: "Username must be 3-20 characters and contain only letters, numbers, and underscores" });
+        return;
+      }
+      
+      const isAvailable = await storage.isUsernameAvailable(username);
+      if (!isAvailable) {
+        res.status(409).json({ error: "Username is already taken" });
+        return;
+      }
+      
+      const updatedUser = await storage.setUsername(userId, username);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error setting username:", error);
+      res.status(500).json({ error: "Failed to set username" });
+    }
+  });
+
   return httpServer;
 }

@@ -332,12 +332,27 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async isUsernameAvailable(username: string): Promise<boolean> {
+    const existing = await db.select().from(users)
+      .where(eq(users.username, username.toLowerCase()));
+    return existing.length === 0;
+  }
+
+  async setUsername(userId: string, username: string): Promise<User> {
+    const [user] = await db.update(users)
+      .set({ username: username.toLowerCase(), updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
   async searchUsers(query: string): Promise<(User & { drinksCount: number })[]> {
     const searchPattern = `%${query.toLowerCase()}%`;
     const results = await db.select().from(users)
       .where(
         or(
           like(sql`LOWER(${users.firstName})`, searchPattern),
+          like(sql`LOWER(${users.username})`, searchPattern),
           like(sql`LOWER(${users.email})`, searchPattern)
         )
       )
