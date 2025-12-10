@@ -129,14 +129,16 @@ function AppLayout() {
 function AppWithIntro() {
   const { isAuthenticated, isLoading } = useAuth();
   const [showIntro, setShowIntro] = useState(false);
-  const [hasShownIntro, setHasShownIntro] = useState(false);
+  const [wasAuthenticated, setWasAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated && !isLoading && !hasShownIntro) {
-      setShowIntro(true);
-      setHasShownIntro(true);
+    if (!isLoading) {
+      if (wasAuthenticated === false && isAuthenticated) {
+        setShowIntro(true);
+      }
+      setWasAuthenticated(isAuthenticated);
     }
-  }, [isAuthenticated, isLoading, hasShownIntro]);
+  }, [isAuthenticated, isLoading, wasAuthenticated]);
 
   const handleIntroComplete = () => {
     setShowIntro(false);
