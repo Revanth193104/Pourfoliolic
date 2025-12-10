@@ -448,5 +448,42 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/community/search-users", async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q || typeof q !== "string") {
+        res.json([]);
+        return;
+      }
+      const results = await storage.searchUsers(q);
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      res.status(500).json({ error: "Failed to search users" });
+    }
+  });
+
+  app.get("/api/community/followers", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const followers = await storage.getFollowers(userId);
+      res.json(followers);
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+      res.status(500).json({ error: "Failed to fetch followers" });
+    }
+  });
+
+  app.get("/api/community/following", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const following = await storage.getFollowing(userId);
+      res.json(following);
+    } catch (error) {
+      console.error("Error fetching following:", error);
+      res.status(500).json({ error: "Failed to fetch following" });
+    }
+  });
+
   return httpServer;
 }

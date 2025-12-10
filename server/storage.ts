@@ -332,6 +332,28 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async searchUsers(query: string): Promise<(User & { drinksCount: number })[]> {
+    const searchPattern = `%${query.toLowerCase()}%`;
+    const results = await db.select().from(users)
+      .where(
+        or(
+          like(sql`LOWER(${users.firstName})`, searchPattern),
+          like(sql`LOWER(${users.email})`, searchPattern)
+        )
+      )
+      .limit(20);
+    
+    const usersWithCounts = await Promise.all(results.map(async (user) => {
+      const userDrinks = await db.select({ count: count() }).from(drinks).where(eq(drinks.userId, user.id));
+      return {
+        ...user,
+        drinksCount: userDrinks[0]?.count || 0
+      };
+    }));
+    
+    return usersWithCounts;
+  }
+
   async getCommunityFeed(userId?: string): Promise<(Drink & { user: User; cheersCount: number; hasCheered: boolean; comments: (Comment & { user: User })[] })[]> {
     const publicDrinks = await db.select({
       drink: drinks,

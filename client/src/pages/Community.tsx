@@ -63,6 +63,11 @@ export default function Community() {
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [suggestedUsers, setSuggestedUsers] = useState<UserProfile[]>([]);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [searchedUsers, setSearchedUsers] = useState<UserProfile[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [followers, setFollowers] = useState<UserProfile[]>([]);
+  const [following, setFollowing] = useState<UserProfile[]>([]);
 
   useEffect(() => {
     fetchPublicDrinks();
@@ -70,6 +75,8 @@ export default function Community() {
     fetchFeaturedDrinks();
     if (isAuthenticated) {
       fetchSuggestedUsers();
+      fetchFollowers();
+      fetchFollowing();
     }
   }, [isAuthenticated]);
 
@@ -127,6 +134,60 @@ export default function Community() {
       console.error("Failed to fetch suggested users:", error);
     }
   };
+
+  const fetchFollowers = async () => {
+    try {
+      const response = await fetch("/api/community/followers");
+      if (response.ok) {
+        const data = await response.json();
+        setFollowers(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch followers:", error);
+    }
+  };
+
+  const fetchFollowing = async () => {
+    try {
+      const response = await fetch("/api/community/following");
+      if (response.ok) {
+        const data = await response.json();
+        setFollowing(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch following:", error);
+    }
+  };
+
+  const searchUsers = async (query: string) => {
+    if (!query.trim()) {
+      setSearchedUsers([]);
+      return;
+    }
+    setSearchingUsers(true);
+    try {
+      const response = await fetch(`/api/community/search-users?q=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSearchedUsers(data);
+      }
+    } catch (error) {
+      console.error("Failed to search users:", error);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      if (userSearchQuery) {
+        searchUsers(userSearchQuery);
+      } else {
+        setSearchedUsers([]);
+      }
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [userSearchQuery]);
 
   const handleCheers = async (drinkId: string) => {
     if (!isAuthenticated) {
@@ -497,6 +558,118 @@ export default function Community() {
         </TabsContent>
 
         <TabsContent value="people" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Find People</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  data-testid="input-user-search"
+                  placeholder="Search by name..."
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              {searchingUsers ? (
+                <div className="text-center py-4 text-muted-foreground">Searching...</div>
+              ) : userSearchQuery && searchedUsers.length > 0 ? (
+                <div className="space-y-4">
+                  {searchedUsers.map((profile) => (
+                    <div key={profile.id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={profile.profileImageUrl || undefined} />
+                          <AvatarFallback>{profile.firstName?.[0] || "U"}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{profile.firstName || "User"}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {profile.drinksCount} tastings
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleFollow(profile.id)}
+                        data-testid={`button-follow-search-${profile.id}`}
+                      >
+                        <UserPlus className="h-4 w-4 mr-1" />
+                        Follow
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : userSearchQuery ? (
+                <div className="text-center py-4 text-muted-foreground">No users found</div>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          {isAuthenticated && (
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Followers ({followers.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {followers.length > 0 ? (
+                    <div className="space-y-3">
+                      {followers.map((follower: any) => (
+                        <div key={follower.id} className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={follower.profileImageUrl || undefined} />
+                            <AvatarFallback>{follower.firstName?.[0] || "U"}</AvatarFallback>
+                          </Avatar>
+                          <p className="font-medium">{follower.firstName || "User"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm text-center py-4">
+                      No followers yet
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserPlus className="h-5 w-5" />
+                    Following ({following.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {following.length > 0 ? (
+                    <div className="space-y-3">
+                      {following.map((followed: any) => (
+                        <div key={followed.id} className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={followed.profileImageUrl || undefined} />
+                            <AvatarFallback>{followed.firstName?.[0] || "U"}</AvatarFallback>
+                          </Avatar>
+                          <p className="font-medium">{followed.firstName || "User"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm text-center py-4">
+                      Not following anyone yet
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Suggested to Follow</CardTitle>
