@@ -385,7 +385,7 @@ export default function Home() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight" data-testid="text-dashboard-title">Dashboard</h2>
+          <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 bg-clip-text text-transparent" data-testid="text-dashboard-title">Dashboard</h2>
           <p className="text-muted-foreground">Welcome back to your tasting journal.</p>
         </div>
         <div className="flex items-center gap-2">
