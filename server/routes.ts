@@ -884,5 +884,99 @@ export async function registerRoutes(
     }
   });
 
+  // Chat API endpoints
+  app.get("/api/chat/connections", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const connections = await storage.getMutualConnections(userId);
+      res.json(connections);
+    } catch (error) {
+      console.error("Error fetching connections:", error);
+      res.status(500).json({ error: "Failed to fetch connections" });
+    }
+  });
+
+  app.get("/api/chat/conversations", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const conversations = await storage.getConversations(userId);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ error: "Failed to fetch conversations" });
+    }
+  });
+
+  app.post("/api/chat/conversations", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { otherUserId } = req.body;
+      
+      if (!otherUserId) {
+        res.status(400).json({ error: "Other user ID is required" });
+        return;
+      }
+      
+      const areMutual = await storage.areMutualFollowers(userId, otherUserId);
+      if (!areMutual) {
+        res.status(403).json({ error: "You can only chat with mutual connections" });
+        return;
+      }
+      
+      const conversation = await storage.getOrCreateConversation(userId, otherUserId);
+      res.json(conversation);
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).json({ error: "Failed to create conversation" });
+    }
+  });
+
+  app.get("/api/chat/conversations/:id/messages", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { id } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const before = req.query.before ? new Date(req.query.before as string) : undefined;
+      
+      const messages = await storage.getMessages(id, userId, limit, before);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/chat/conversations/:id/messages", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { id } = req.params;
+      const { content } = req.body;
+      
+      if (!content || typeof content !== "string") {
+        res.status(400).json({ error: "Message content is required" });
+        return;
+      }
+      
+      const message = await storage.sendMessage(id, userId, content);
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  app.post("/api/chat/conversations/:id/read", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { id } = req.params;
+      
+      await storage.markConversationRead(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking conversation read:", error);
+      res.status(500).json({ error: "Failed to mark conversation read" });
+    }
+  });
+
   return httpServer;
 }

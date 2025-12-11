@@ -862,18 +862,16 @@ export class DatabaseStorage implements IStorage {
     
     if (participant.length === 0) return [];
     
-    let query = db.select()
-      .from(messages)
-      .where(eq(messages.conversationId, conversationId));
-    
+    const conditions = [eq(messages.conversationId, conversationId)];
     if (before) {
-      query = query.where(and(
-        eq(messages.conversationId, conversationId),
-        lte(messages.createdAt, before)
-      )) as any;
+      conditions.push(lte(messages.createdAt, before));
     }
     
-    return await query.orderBy(desc(messages.createdAt)).limit(limit);
+    return await db.select()
+      .from(messages)
+      .where(and(...conditions))
+      .orderBy(desc(messages.createdAt))
+      .limit(limit);
   }
 
   async markConversationRead(conversationId: string, userId: string): Promise<void> {
