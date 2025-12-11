@@ -1012,14 +1012,27 @@ export default function Community() {
                         {following.map((followed: any) => (
                           <div 
                             key={followed.id} 
-                            className="flex items-center gap-3 cursor-pointer hover:opacity-80"
-                            onClick={() => fetchUserProfile(followed.id)}
+                            className="flex items-center justify-between"
                           >
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={followed.profileImageUrl || undefined} />
-                              <AvatarFallback>{getUserInitial(followed)}</AvatarFallback>
-                            </Avatar>
-                            <p className="font-medium hover:underline">{getUserDisplayName(followed)}</p>
+                            <div 
+                              className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+                              onClick={() => fetchUserProfile(followed.id)}
+                            >
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={followed.profileImageUrl || undefined} />
+                                <AvatarFallback>{getUserInitial(followed)}</AvatarFallback>
+                              </Avatar>
+                              <p className="font-medium hover:underline">{getUserDisplayName(followed)}</p>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() => handleFollow(followed.id, "accepted")}
+                              data-testid={`button-unfollow-${followed.id}`}
+                            >
+                              <UserMinus className="h-4 w-4" />
+                            </Button>
                           </div>
                         ))}
                       </div>
