@@ -108,6 +108,8 @@ export default function Community() {
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [followers, setFollowers] = useState<UserProfile[]>([]);
   const [following, setFollowing] = useState<UserProfile[]>([]);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
   const [followRequests, setFollowRequests] = useState<(UserProfile & { requestedAt?: Date | null })[]>([]);
   const [viewingUser, setViewingUser] = useState<{
     id: string;
@@ -933,84 +935,102 @@ export default function Community() {
           )}
 
           {isAuthenticated && (
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Followers ({followers.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {followers.length > 0 ? (
-                    <div className="space-y-3">
-                      {followers.map((follower: any) => (
-                        <div 
-                          key={follower.id} 
-                          className="flex items-center justify-between"
-                        >
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex justify-center gap-8 mb-4">
+                  <button
+                    onClick={() => setShowFollowers(!showFollowers)}
+                    className="text-center hover:opacity-80 transition-opacity"
+                    data-testid="button-show-followers"
+                  >
+                    <p className="text-2xl font-bold">{followers.length}</p>
+                    <p className="text-sm text-muted-foreground">Followers</p>
+                  </button>
+                  <div className="w-px bg-border" />
+                  <button
+                    onClick={() => setShowFollowing(!showFollowing)}
+                    className="text-center hover:opacity-80 transition-opacity"
+                    data-testid="button-show-following"
+                  >
+                    <p className="text-2xl font-bold">{following.length}</p>
+                    <p className="text-sm text-muted-foreground">Following</p>
+                  </button>
+                </div>
+
+                {showFollowers && (
+                  <div className="border-t pt-4 mt-4">
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Followers
+                    </h4>
+                    {followers.length > 0 ? (
+                      <div className="space-y-3">
+                        {followers.map((follower: any) => (
                           <div 
+                            key={follower.id} 
+                            className="flex items-center justify-between"
+                          >
+                            <div 
+                              className="flex items-center gap-3 cursor-pointer hover:opacity-80"
+                              onClick={() => fetchUserProfile(follower.id)}
+                            >
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={follower.profileImageUrl || undefined} />
+                                <AvatarFallback>{getUserInitial(follower)}</AvatarFallback>
+                              </Avatar>
+                              <p className="font-medium hover:underline">{getUserDisplayName(follower)}</p>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() => handleRemoveFollower(follower.id)}
+                              data-testid={`button-remove-follower-${follower.id}`}
+                            >
+                              <UserMinus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-sm text-center py-4">
+                        No followers yet
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {showFollowing && (
+                  <div className="border-t pt-4 mt-4">
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <UserPlus className="h-4 w-4" />
+                      Following
+                    </h4>
+                    {following.length > 0 ? (
+                      <div className="space-y-3">
+                        {following.map((followed: any) => (
+                          <div 
+                            key={followed.id} 
                             className="flex items-center gap-3 cursor-pointer hover:opacity-80"
-                            onClick={() => fetchUserProfile(follower.id)}
+                            onClick={() => fetchUserProfile(followed.id)}
                           >
                             <Avatar className="h-10 w-10">
-                              <AvatarImage src={follower.profileImageUrl || undefined} />
-                              <AvatarFallback>{getUserInitial(follower)}</AvatarFallback>
+                              <AvatarImage src={followed.profileImageUrl || undefined} />
+                              <AvatarFallback>{getUserInitial(followed)}</AvatarFallback>
                             </Avatar>
-                            <p className="font-medium hover:underline">{getUserDisplayName(follower)}</p>
+                            <p className="font-medium hover:underline">{getUserDisplayName(followed)}</p>
                           </div>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            className="text-muted-foreground hover:text-destructive"
-                            onClick={() => handleRemoveFollower(follower.id)}
-                            data-testid={`button-remove-follower-${follower.id}`}
-                          >
-                            <UserMinus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm text-center py-4">
-                      No followers yet
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <UserPlus className="h-5 w-5" />
-                    Following ({following.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {following.length > 0 ? (
-                    <div className="space-y-3">
-                      {following.map((followed: any) => (
-                        <div 
-                          key={followed.id} 
-                          className="flex items-center gap-3 cursor-pointer hover:opacity-80"
-                          onClick={() => fetchUserProfile(followed.id)}
-                        >
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={followed.profileImageUrl || undefined} />
-                            <AvatarFallback>{getUserInitial(followed)}</AvatarFallback>
-                          </Avatar>
-                          <p className="font-medium hover:underline">{getUserDisplayName(followed)}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm text-center py-4">
-                      Not following anyone yet
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-sm text-center py-4">
+                        Not following anyone yet
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           <Card>
