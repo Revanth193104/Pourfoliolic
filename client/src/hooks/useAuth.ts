@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { auth, signInWithGoogle, logOut, getIdToken, resetPassword, signUpWithEmail, signInWithEmail } from "@/lib/firebase";
+import { auth, signInWithGoogle, logOut, getIdToken, resetPassword, signUpWithEmail, signInWithEmail, handleRedirectResult } from "@/lib/firebase";
 import type { User as FirebaseUser } from "firebase/auth";
 import type { User } from "@shared/schema";
 import { useQueryClient } from "@tanstack/react-query";
@@ -9,6 +9,13 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
+
+  // Handle redirect result on mount
+  useEffect(() => {
+    handleRedirectResult().catch((error) => {
+      console.error("Error handling redirect:", error);
+    });
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (fbUser) => {
@@ -54,7 +61,9 @@ export function useAuth() {
 
   const login = async (rememberMe: boolean = true) => {
     try {
+      // signInWithRedirect doesn't return immediately - it redirects the page
       await signInWithGoogle(rememberMe);
+      // The page will redirect and auth state will be picked up on return
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
