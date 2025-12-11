@@ -1,8 +1,7 @@
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -49,7 +48,8 @@ export async function signInWithGoogle(rememberMe: boolean = true) {
   try {
     const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
     await setPersistence(auth, persistence);
-    await signInWithRedirect(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
   } catch (error) {
     console.error("Error signing in with Google:", error);
     throw error;
@@ -62,16 +62,6 @@ export async function resetPassword(email: string) {
     return true;
   } catch (error) {
     console.error("Error sending password reset email:", error);
-    throw error;
-  }
-}
-
-export async function handleRedirectResult() {
-  try {
-    const result = await getRedirectResult(auth);
-    return result;
-  } catch (error) {
-    console.error("Error handling redirect result:", error);
     throw error;
   }
 }
