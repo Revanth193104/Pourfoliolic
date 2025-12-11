@@ -62,9 +62,15 @@ export default function Profile() {
     
     setIsSavingUsername(true);
     try {
+      const token = await getIdToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
       const response = await fetch("/api/username/set", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ username: newUsername }),
       });
 
