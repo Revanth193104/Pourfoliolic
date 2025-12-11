@@ -1,4 +1,4 @@
-import { type User, type UpsertUser, type Drink, type InsertDrink, drinks, users, follows, cheers, comments, type Comment, circles, circleMembers, circleInvites, circlePosts, type Circle, type InsertCircle, type CircleMember, type InsertCircleInvite, type CircleInvite, type InsertCirclePost, type CirclePost } from "@shared/schema";
+import { type User, type UpsertUser, type Drink, type InsertDrink, drinks, users, follows, cheers, comments, type Comment, circles, circleMembers, circleInvites, circlePosts, type Circle, type InsertCircle, type CircleMember, type InsertCircleInvite, type CircleInvite, type InsertCirclePost, type CirclePost, conversations, conversationParticipants, messages, type Conversation, type Message } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, and, or, like, gte, lte, sql, ne, count, inArray } from "drizzle-orm";
 
@@ -63,6 +63,15 @@ export interface IStorage {
   getFeaturedDrinks(): Promise<Drink[]>;
   getSuggestedUsers(userId: string): Promise<(User & { drinksCount: number; followStatus: "none" | "pending" | "accepted" })[]>;
   getCommunityFeed(userId?: string): Promise<(Drink & { user: User; cheersCount: number; hasCheered: boolean; comments: (Comment & { user: User })[] })[]>;
+  
+  // Chat features
+  areMutualFollowers(userId1: string, userId2: string): Promise<boolean>;
+  getOrCreateConversation(userId1: string, userId2: string): Promise<Conversation>;
+  getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number })[]>;
+  sendMessage(conversationId: string, senderId: string, content: string): Promise<Message>;
+  getMessages(conversationId: string, userId: string, limit?: number, before?: Date): Promise<Message[]>;
+  markConversationRead(conversationId: string, userId: string): Promise<void>;
+  getMutualConnections(userId: string): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -718,6 +727,162 @@ export class DatabaseStorage implements IStorage {
     }
     
     return results;
+  }
+
+  // Chat features
+  async areMutualFollowers(userId1: string, userId2: string): Promise<boolean> {
+    const [forward] = await db.select().from(follows)
+      .where(and(
+        eq(follows.followerId, userId1),
+        eq(follows.followingId, userId2),
+        eq(follows.status, "accepted")
+      ));
+    
+    if (!forward) return false;
+    
+    const [backward] = await db.select().from(follows)
+      .where(and(
+        eq(follows.followerId, userId2),
+        eq(follows.followingId, userId1),
+        eq(follows.status, "accepted")
+      ));
+    
+    return !!backward;
+  }
+
+  async getMutualConnections(userId: string): Promise<User[]> {
+    const following = await db.select({ userId: follows.followingId })
+      .from(follows)
+      .where(and(eq(follows.followerId, userId), eq(follows.status, "accepted")));
+    
+    const followingIds = following.map(f => f.userId);
+    if (followingIds.length === 0) return [];
+    
+    const mutualFollowers = await db.select({ user: users })
+      .from(follows)
+      .innerJoin(users, eq(follows.followerId, users.id))
+      .where(and(
+        eq(follows.followingId, userId),
+        eq(follows.status, "accepted"),
+        inArray(follows.followerId, followingIds)
+      ));
+    
+    return mutualFollowers.map(r => r.user);
+  }
+
+  async getOrCreateConversation(userId1: string, userId2: string): Promise<Conversation> {
+    const existingConvos = await db
+      .select({ conversation: conversations })
+      .from(conversations)
+      .innerJoin(conversationParticipants, eq(conversations.id, conversationParticipants.conversationId))
+      .where(eq(conversationParticipants.userId, userId1));
+    
+    for (const c of existingConvos) {
+      const participants = await db.select()
+        .from(conversationParticipants)
+        .where(eq(conversationParticipants.conversationId, c.conversation.id));
+      
+      if (participants.length === 2 && participants.some(p => p.userId === userId2)) {
+        return c.conversation;
+      }
+    }
+    
+    const [newConversation] = await db.insert(conversations).values({}).returning();
+    
+    await db.insert(conversationParticipants).values([
+      { conversationId: newConversation.id, userId: userId1 },
+      { conversationId: newConversation.id, userId: userId2 }
+    ]);
+    
+    return newConversation;
+  }
+
+  async getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number })[]> {
+    const userConvos = await db
+      .select({ conversation: conversations, participant: conversationParticipants })
+      .from(conversationParticipants)
+      .innerJoin(conversations, eq(conversationParticipants.conversationId, conversations.id))
+      .where(eq(conversationParticipants.userId, userId))
+      .orderBy(desc(conversations.lastMessageAt));
+    
+    const result = await Promise.all(userConvos.map(async (row) => {
+      const otherParticipant = await db.select({ user: users, participant: conversationParticipants })
+        .from(conversationParticipants)
+        .innerJoin(users, eq(conversationParticipants.userId, users.id))
+        .where(and(
+          eq(conversationParticipants.conversationId, row.conversation.id),
+          ne(conversationParticipants.userId, userId)
+        ));
+      
+      const [lastMessage] = await db.select()
+        .from(messages)
+        .where(eq(messages.conversationId, row.conversation.id))
+        .orderBy(desc(messages.createdAt))
+        .limit(1);
+      
+      const lastReadAt = row.participant.lastReadAt || new Date(0);
+      const [unreadResult] = await db.select({ count: count() })
+        .from(messages)
+        .where(and(
+          eq(messages.conversationId, row.conversation.id),
+          ne(messages.senderId, userId),
+          gte(messages.createdAt, lastReadAt)
+        ));
+      
+      return {
+        ...row.conversation,
+        otherUser: otherParticipant[0]?.user || {} as User,
+        lastMessage,
+        unreadCount: unreadResult?.count || 0
+      };
+    }));
+    
+    return result.filter(r => r.otherUser.id);
+  }
+
+  async sendMessage(conversationId: string, senderId: string, content: string): Promise<Message> {
+    const [message] = await db.insert(messages)
+      .values({ conversationId, senderId, content })
+      .returning();
+    
+    await db.update(conversations)
+      .set({ lastMessageAt: new Date() })
+      .where(eq(conversations.id, conversationId));
+    
+    return message;
+  }
+
+  async getMessages(conversationId: string, userId: string, limit: number = 50, before?: Date): Promise<Message[]> {
+    const participant = await db.select()
+      .from(conversationParticipants)
+      .where(and(
+        eq(conversationParticipants.conversationId, conversationId),
+        eq(conversationParticipants.userId, userId)
+      ));
+    
+    if (participant.length === 0) return [];
+    
+    let query = db.select()
+      .from(messages)
+      .where(eq(messages.conversationId, conversationId));
+    
+    if (before) {
+      query = query.where(and(
+        eq(messages.conversationId, conversationId),
+        lte(messages.createdAt, before)
+      )) as any;
+    }
+    
+    return await query.orderBy(desc(messages.createdAt)).limit(limit);
+  }
+
+  async markConversationRead(conversationId: string, userId: string): Promise<void> {
+    await db.update(conversationParticipants)
+      .set({ lastReadAt: new Date() })
+      .where(and(
+        eq(conversationParticipants.conversationId, conversationId),
+        eq(conversationParticipants.userId, userId)
+      ));
   }
 }
 
