@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, Send, ArrowLeft, Users } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Users, Check, CheckCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 
@@ -32,6 +32,7 @@ interface Conversation {
   otherUser: User;
   lastMessage?: Message;
   unreadCount: number;
+  otherUserLastReadAt?: string;
 }
 
 export default function Chat() {
@@ -321,30 +322,52 @@ export default function Chat() {
                       <p className="text-sm">Say hello!</p>
                     </div>
                   ) : (
-                    messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${msg.senderId === firebaseUser?.uid ? "justify-end" : "justify-start"}`}
-                      >
+                    messages.map((msg) => {
+                      const isSent = msg.senderId === firebaseUser?.uid;
+                      const isRead = isSent && selectedConversation?.otherUserLastReadAt && 
+                        new Date(selectedConversation.otherUserLastReadAt) >= new Date(msg.createdAt);
+                      
+                      return (
                         <div
-                          className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                            msg.senderId === firebaseUser?.uid
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted"
-                          }`}
-                          data-testid={`message-${msg.id}`}
+                          key={msg.id}
+                          className={`flex ${isSent ? "justify-end" : "justify-start"}`}
                         >
-                          <p>{msg.content}</p>
-                          <p className={`text-xs mt-1 ${
-                            msg.senderId === firebaseUser?.uid 
-                              ? "text-primary-foreground/70" 
-                              : "text-muted-foreground"
-                          }`}>
-                            {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
-                          </p>
+                          <div
+                            className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                              isSent
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted"
+                            }`}
+                            data-testid={`message-${msg.id}`}
+                          >
+                            <p>{msg.content}</p>
+                            <div className={`flex items-center gap-1 mt-1 ${
+                              isSent 
+                                ? "text-primary-foreground/70" 
+                                : "text-muted-foreground"
+                            }`}>
+                              <span className="text-xs">
+                                {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
+                              </span>
+                              {isSent && (
+                                <span className="flex items-center" data-testid={`read-status-${msg.id}`}>
+                                  {isRead ? (
+                                    <CheckCheck className="h-3.5 w-3.5 text-blue-400" />
+                                  ) : (
+                                    <Check className="h-3.5 w-3.5" />
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                            {isSent && isRead && selectedConversation?.otherUserLastReadAt && (
+                              <p className="text-xs text-primary-foreground/50 mt-0.5" data-testid={`read-time-${msg.id}`}>
+                                Read {formatDistanceToNow(new Date(selectedConversation.otherUserLastReadAt), { addSuffix: true })}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                   <div ref={messagesEndRef} />
                 </div>

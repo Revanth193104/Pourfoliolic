@@ -67,7 +67,7 @@ export interface IStorage {
   // Chat features
   areMutualFollowers(userId1: string, userId2: string): Promise<boolean>;
   getOrCreateConversation(userId1: string, userId2: string): Promise<Conversation>;
-  getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number })[]>;
+  getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number; otherUserLastReadAt?: string })[]>;
   sendMessage(conversationId: string, senderId: string, content: string): Promise<Message>;
   getMessages(conversationId: string, userId: string, limit?: number, before?: Date): Promise<Message[]>;
   markConversationRead(conversationId: string, userId: string): Promise<void>;
@@ -797,7 +797,7 @@ export class DatabaseStorage implements IStorage {
     return newConversation;
   }
 
-  async getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number })[]> {
+  async getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number; otherUserLastReadAt?: string })[]> {
     const userConvos = await db
       .select({ conversation: conversations, participant: conversationParticipants })
       .from(conversationParticipants)
@@ -833,7 +833,8 @@ export class DatabaseStorage implements IStorage {
         ...row.conversation,
         otherUser: otherParticipant[0]?.user || {} as User,
         lastMessage,
-        unreadCount: unreadResult?.count || 0
+        unreadCount: unreadResult?.count || 0,
+        otherUserLastReadAt: otherParticipant[0]?.participant.lastReadAt?.toISOString()
       };
     }));
     
