@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, X, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,120 +8,111 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
+import type { Notification as DBNotification } from "@shared/schema";
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  date: string;
-  read: boolean;
-  type: "feature" | "update" | "tip";
+interface Notification extends DBNotification {
+  actor: { id: string; firstName?: string; lastName?: string; username?: string };
 }
 
-const NOTIFICATIONS_KEY = "pourfoliolic_notifications";
-const SEEN_IDS_KEY = "pourfoliolic_seen_notifications";
-
-const DEFAULT_NOTIFICATIONS: Notification[] = [
-  {
-    id: "customizable-dashboard",
-    title: "Customizable Dashboard",
-    message: "You can now personalize your dashboard! Click the settings icon to show/hide widgets and reorder them.",
-    date: new Date().toISOString(),
-    read: false,
-    type: "feature",
-  },
-  {
-    id: "page-transitions",
-    title: "Smooth Transitions",
-    message: "We've added beautiful animated transitions between pages for a smoother experience.",
-    date: new Date().toISOString(),
-    read: false,
-    type: "feature",
-  },
-  {
-    id: "remember-me",
-    title: "Remember Me Option",
-    message: "Stay signed in! Toggle 'Remember me' when signing in to keep your session active.",
-    date: new Date().toISOString(),
-    read: false,
-    type: "feature",
-  },
-  {
-    id: "welcome-tip",
-    title: "Welcome to Pourfoliolic!",
-    message: "Start logging your favorite drinks to build your personal tasting journal. Track wines, beers, spirits, and cocktails!",
-    date: new Date().toISOString(),
-    read: false,
-    type: "tip",
-  },
-];
-
-function loadNotifications(): Notification[] {
-  try {
-    const seenIds = JSON.parse(localStorage.getItem(SEEN_IDS_KEY) || "[]") as string[];
-    return DEFAULT_NOTIFICATIONS.map(n => ({
-      ...n,
-      read: seenIds.includes(n.id),
-    }));
-  } catch {
-    return DEFAULT_NOTIFICATIONS;
-  }
-}
-
-function saveSeenNotifications(notifications: Notification[]) {
-  try {
-    const seenIds = notifications.filter(n => n.read).map(n => n.id);
-    localStorage.setItem(SEEN_IDS_KEY, JSON.stringify(seenIds));
-  } catch (e) {
-    console.error("Failed to save notification state:", e);
-  }
-}
-
-export function NotificationBell() {
-  const [notifications, setNotifications] = useState<Notification[]>(loadNotifications);
+export function NotificationBell({ firebaseUser, isAuthenticated }: { firebaseUser: any; isAuthenticated: boolean }) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!firebaseUser || !isAuthenticated) return;
+
+    const fetchNotifications = async () => {
+      try {
+        const token = await firebaseUser.getIdToken();
+        const res = await fetch("/api/notifications", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const newNotifications = data.filter((n: any) => !n.read);
+          
+          newNotifications.forEach((notif: any) => {
+            const actorName = notif.actor.firstName || notif.actor.username || "Someone";
+            let message = "";
+            if (notif.type === "follow") {
+              message = `${actorName} followed you`;
+            } else if (notif.type === "comment") {
+              message = `${actorName} commented on your drink`;
+            } else if (notif.type === "cheer") {
+              message = `${actorName} cheered your drink`;
+            }
+            
+            if (message) {
+              toast({ title: "New Activity", description: message });
+            }
+          });
+          
+          setNotifications(data);
+        }
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 5000);
+    return () => clearInterval(interval);
+  }, [firebaseUser, isAuthenticated, toast]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => {
-      const updated = prev.map(n =>
-        n.id === id ? { ...n, read: true } : n
-      );
-      saveSeenNotifications(updated);
-      return updated;
-    });
+  const markAllAsRead = async () => {
+    try {
+      if (firebaseUser) {
+        const token = await firebaseUser.getIdToken();
+        await fetch("/api/notifications/mark-read", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      }
+    } catch (error) {
+      console.error("Error marking notifications read:", error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => {
-      const updated = prev.map(n => ({ ...n, read: true }));
-      saveSeenNotifications(updated);
-      return updated;
-    });
-  };
-
-  const getTypeColor = (type: Notification["type"]) => {
+  const getTypeColor = (type: string) => {
     switch (type) {
-      case "feature":
+      case "follow":
         return "bg-blue-500";
-      case "update":
-        return "bg-green-500";
-      case "tip":
+      case "comment":
+        return "bg-purple-500";
+      case "cheer":
         return "bg-amber-500";
       default:
         return "bg-gray-500";
     }
   };
 
-  const getTypeLabel = (type: Notification["type"]) => {
+  const getTypeLabel = (type: string) => {
     switch (type) {
-      case "feature":
-        return "New Feature";
-      case "update":
-        return "Update";
-      case "tip":
-        return "Tip";
+      case "follow":
+        return "Follow";
+      case "comment":
+        return "Comment";
+      case "cheer":
+        return "Cheer";
+      default:
+        return "";
+    }
+  };
+
+  const getNotificationMessage = (notif: Notification) => {
+    const actorName = notif.actor?.firstName || notif.actor?.username || "Someone";
+    switch (notif.type) {
+      case "follow":
+        return `${actorName} followed you`;
+      case "comment":
+        return `${actorName} commented on your drink`;
+      case "cheer":
+        return `${actorName} cheered your drink`;
       default:
         return "";
     }
@@ -180,10 +171,9 @@ export function NotificationBell() {
                   key={notification.id}
                   initial={false}
                   animate={{ opacity: notification.read ? 0.7 : 1 }}
-                  className={`p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
+                  className={`p-4 hover:bg-muted/50 transition-colors ${
                     !notification.read ? "bg-muted/20" : ""
                   }`}
-                  onClick={() => markAsRead(notification.id)}
                   data-testid={`notification-${notification.id}`}
                 >
                   <div className="flex items-start gap-3">
@@ -201,9 +191,9 @@ export function NotificationBell() {
                           </span>
                         )}
                       </div>
-                      <p className="font-medium text-sm">{notification.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                        {notification.message}
+                      <p className="font-medium text-sm">{getNotificationMessage(notification)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notification.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>

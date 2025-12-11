@@ -137,7 +137,7 @@ export function Sidebar() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            {isAuthenticated && <NotificationBell />}
+            {isAuthenticated && <NotificationBell firebaseUser={firebaseUser} isAuthenticated={isAuthenticated} />}
           </div>
         </div>
       </div>

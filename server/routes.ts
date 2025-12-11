@@ -43,6 +43,28 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/notifications", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const notifs = await storage.getNotifications(userId);
+      res.json(notifs);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  app.post("/api/notifications/mark-read", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      await storage.markNotificationsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notifications read:", error);
+      res.status(500).json({ error: "Failed to mark notifications read" });
+    }
+  });
+
   app.post("/api/drinks", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = (req as AuthenticatedRequest).user!.uid;
@@ -471,6 +493,12 @@ export async function registerRoutes(
       const userId = (req as AuthenticatedRequest).user!.uid;
       const { drinkId } = req.params;
       const isCheered = await storage.toggleCheers(drinkId, userId);
+      if (isCheered) {
+        const drink = await storage.getDrinkById(drinkId);
+        if (drink && drink.userId) {
+          await storage.createNotification(drink.userId, "cheer", userId, drinkId);
+        }
+      }
       res.json({ cheered: isCheered });
     } catch (error) {
       console.error("Error toggling cheers:", error);
@@ -491,6 +519,12 @@ export async function registerRoutes(
       
       const comment = await storage.addComment(drinkId, userId, content);
       const user = await storage.getUser(userId);
+      
+      const drink = await storage.getDrinkById(drinkId);
+      if (drink && drink.userId) {
+        await storage.createNotification(drink.userId, "comment", userId, drinkId);
+      }
+      
       res.json({ ...comment, user });
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -509,6 +543,9 @@ export async function registerRoutes(
       }
       
       const result = await storage.sendFollowRequest(followerId, userId);
+      if (result === "pending" || result === "already_following") {
+        await storage.createNotification(userId, "follow", followerId);
+      }
       res.json({ status: result });
     } catch (error) {
       console.error("Error sending follow request:", error);

@@ -1,4 +1,4 @@
-import { type User, type UpsertUser, type Drink, type InsertDrink, drinks, users, follows, cheers, comments, type Comment, circles, circleMembers, circleInvites, circlePosts, type Circle, type InsertCircle, type CircleMember, type InsertCircleInvite, type CircleInvite, type InsertCirclePost, type CirclePost, conversations, conversationParticipants, messages, type Conversation, type Message } from "@shared/schema";
+import { type User, type UpsertUser, type Drink, type InsertDrink, drinks, users, follows, cheers, comments, type Comment, circles, circleMembers, circleInvites, circlePosts, type Circle, type InsertCircle, type CircleMember, type InsertCircleInvite, type CircleInvite, type InsertCirclePost, type CirclePost, conversations, conversationParticipants, messages, type Conversation, type Message, notifications, type Notification } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, and, or, like, gte, lte, sql, ne, count, inArray } from "drizzle-orm";
 
@@ -73,6 +73,11 @@ export interface IStorage {
   getMessages(conversationId: string, userId: string, limit?: number, before?: Date): Promise<Message[]>;
   markConversationRead(conversationId: string, userId: string): Promise<void>;
   getMutualConnections(userId: string): Promise<User[]>;
+
+  // Notifications
+  createNotification(userId: string, type: "follow" | "comment" | "cheer", actorId: string, drinkId?: string): Promise<Notification>;
+  getNotifications(userId: string): Promise<(Notification & { actor: User })[]>;
+  markNotificationsRead(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -891,6 +896,33 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(conversationParticipants.conversationId, conversationId),
         eq(conversationParticipants.userId, userId)
+      ));
+  }
+
+  async createNotification(userId: string, type: "follow" | "comment" | "cheer", actorId: string, drinkId?: string): Promise<Notification> {
+    const [notification] = await db.insert(notifications)
+      .values({ userId, type, actorId, drinkId })
+      .returning();
+    return notification;
+  }
+
+  async getNotifications(userId: string): Promise<(Notification & { actor: User })[]> {
+    const notifs = await db.select({ notification: notifications, actor: users })
+      .from(notifications)
+      .innerJoin(users, eq(notifications.actorId, users.id))
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(50);
+    
+    return notifs.map(n => ({ ...n.notification, actor: n.actor }));
+  }
+
+  async markNotificationsRead(userId: string): Promise<void> {
+    await db.update(notifications)
+      .set({ read: true })
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.read, false)
       ));
   }
 }
