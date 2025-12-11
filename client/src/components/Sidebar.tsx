@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import { LayoutDashboard, PlusCircle, Wine, Martini, Users, MessageCircle, User, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Badge } from "@/components/ui/badge";
 import type { User as UserType } from "@shared/schema";
 import {
   AlertDialog,
@@ -79,7 +81,31 @@ function UserSection({ user }: { user: UserType }) {
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, firebaseUser, isAuthenticated, isLoading } = useAuth();
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+
+  useEffect(() => {
+    if (!firebaseUser || !isAuthenticated) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const token = await firebaseUser.getIdToken();
+        const res = await fetch("/api/chat/unread-count", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadMessageCount(data.count || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching unread count:", error);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 10000);
+    return () => clearInterval(interval);
+  }, [firebaseUser, isAuthenticated]);
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard, requiresAuth: true },
@@ -123,7 +149,12 @@ export function Sidebar() {
               )}
             >
               <item.icon className="h-4 w-4" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.href === "/chat" && unreadMessageCount > 0 && (
+                <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs" data-testid="badge-unread-messages">
+                  {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+                </Badge>
+              )}
             </div>
           </Link>
         ))}

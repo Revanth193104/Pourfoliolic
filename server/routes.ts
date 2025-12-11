@@ -978,5 +978,17 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/chat/unread-count", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const conversations = await storage.getConversations(userId);
+      const totalUnread = conversations.reduce((sum, conv) => sum + conv.unreadCount, 0);
+      res.json({ count: totalUnread });
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+
   return httpServer;
 }
