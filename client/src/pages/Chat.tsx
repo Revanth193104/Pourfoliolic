@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, Send, ArrowLeft, Users, Check, CheckCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
 interface User {
@@ -37,6 +38,7 @@ interface Conversation {
 
 export default function Chat() {
   const { firebaseUser } = useAuth();
+  const { toast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [connections, setConnections] = useState<User[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -134,9 +136,21 @@ export default function Chat() {
         setMessages(prev => [...prev, message]);
         setNewMessage("");
         await fetchConversations();
+      } else {
+        const error = await res.json();
+        toast({
+          title: "Failed to send message",
+          description: error.error || "Something went wrong",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      });
     } finally {
       setSendingMessage(false);
     }
