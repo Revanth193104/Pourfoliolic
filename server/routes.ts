@@ -652,5 +652,237 @@ export async function registerRoutes(
     }
   });
 
+  // Export drinks as CSV
+  app.get("/api/drinks/export", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const format = (req.query.format as string) || "csv";
+      
+      const drinks = await storage.getDrinks({ userId }, "date", "desc");
+      
+      if (format === "csv") {
+        const headers = ["Name", "Maker", "Type", "Subtype", "Rating", "Date", "Price", "Currency", "Location", "Purchase Venue", "Nose", "Palate", "Finish", "Pairings", "Occasion", "Mood"];
+        const csvRows = [headers.join(",")];
+        
+        for (const drink of drinks) {
+          const row = [
+            `"${(drink.name || "").replace(/"/g, '""')}"`,
+            `"${(drink.maker || "").replace(/"/g, '""')}"`,
+            `"${(drink.type || "").replace(/"/g, '""')}"`,
+            `"${(drink.subtype || "").replace(/"/g, '""')}"`,
+            drink.rating || "",
+            drink.date ? new Date(drink.date).toISOString().split("T")[0] : "",
+            drink.price || "",
+            drink.currency || "",
+            `"${(drink.location || "").replace(/"/g, '""')}"`,
+            `"${(drink.purchaseVenue || "").replace(/"/g, '""')}"`,
+            `"${(drink.nose || []).join("; ").replace(/"/g, '""')}"`,
+            `"${(drink.palate || []).join("; ").replace(/"/g, '""')}"`,
+            `"${(drink.finish || "").replace(/"/g, '""')}"`,
+            `"${(drink.pairings || []).join("; ").replace(/"/g, '""')}"`,
+            `"${(drink.occasion || "").replace(/"/g, '""')}"`,
+            `"${(drink.mood || "").replace(/"/g, '""')}"`,
+          ];
+          csvRows.push(row.join(","));
+        }
+        
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", "attachment; filename=pourfoliolic-tastings.csv");
+        res.send(csvRows.join("\n"));
+      } else {
+        res.status(400).json({ error: "Unsupported format. Use 'csv'" });
+      }
+    } catch (error) {
+      console.error("Error exporting drinks:", error);
+      res.status(500).json({ error: "Failed to export drinks" });
+    }
+  });
+
+  // Update theme preference
+  app.patch("/api/settings/theme", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { theme } = req.body;
+      
+      if (!theme || !["light", "dark", "system"].includes(theme)) {
+        res.status(400).json({ error: "Invalid theme. Use 'light', 'dark', or 'system'" });
+        return;
+      }
+      
+      const updatedUser = await storage.updateUserTheme(userId, theme);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating theme:", error);
+      res.status(500).json({ error: "Failed to update theme" });
+    }
+  });
+
+  // Get drink recommendations
+  app.get("/api/recommendations", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const recommendations = await storage.getRecommendations(userId);
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+      res.status(500).json({ error: "Failed to fetch recommendations" });
+    }
+  });
+
+  // Circles CRUD
+  app.get("/api/circles", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const circles = await storage.getUserCircles(userId);
+      res.json(circles);
+    } catch (error) {
+      console.error("Error fetching circles:", error);
+      res.status(500).json({ error: "Failed to fetch circles" });
+    }
+  });
+
+  app.post("/api/circles", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { name, description, isPrivate } = req.body;
+      
+      if (!name) {
+        res.status(400).json({ error: "Circle name is required" });
+        return;
+      }
+      
+      const circle = await storage.createCircle({
+        name,
+        description: description || null,
+        isPrivate: isPrivate || false,
+        creatorId: userId,
+        imageUrl: null,
+      });
+      res.status(201).json(circle);
+    } catch (error) {
+      console.error("Error creating circle:", error);
+      res.status(500).json({ error: "Failed to create circle" });
+    }
+  });
+
+  app.get("/api/circles/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const circle = await storage.getCircleById(req.params.id, userId);
+      if (!circle) {
+        res.status(404).json({ error: "Circle not found" });
+        return;
+      }
+      res.json(circle);
+    } catch (error) {
+      console.error("Error fetching circle:", error);
+      res.status(500).json({ error: "Failed to fetch circle" });
+    }
+  });
+
+  app.post("/api/circles/:id/invite", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { inviteeId } = req.body;
+      
+      if (!inviteeId) {
+        res.status(400).json({ error: "Invitee ID is required" });
+        return;
+      }
+      
+      const invite = await storage.createCircleInvite({
+        circleId: req.params.id,
+        inviterId: userId,
+        inviteeId,
+        status: "pending",
+      });
+      res.status(201).json(invite);
+    } catch (error) {
+      console.error("Error creating invite:", error);
+      res.status(500).json({ error: "Failed to create invite" });
+    }
+  });
+
+  app.get("/api/circles/invites/pending", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const invites = await storage.getPendingCircleInvites(userId);
+      res.json(invites);
+    } catch (error) {
+      console.error("Error fetching invites:", error);
+      res.status(500).json({ error: "Failed to fetch invites" });
+    }
+  });
+
+  app.post("/api/circles/invites/:id/accept", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      await storage.acceptCircleInvite(req.params.id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error accepting invite:", error);
+      res.status(500).json({ error: "Failed to accept invite" });
+    }
+  });
+
+  app.post("/api/circles/invites/:id/decline", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      await storage.declineCircleInvite(req.params.id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error declining invite:", error);
+      res.status(500).json({ error: "Failed to decline invite" });
+    }
+  });
+
+  app.post("/api/circles/:id/posts", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { content, drinkId } = req.body;
+      
+      const post = await storage.createCirclePost({
+        circleId: req.params.id,
+        userId,
+        content: content || null,
+        drinkId: drinkId || null,
+      });
+      res.status(201).json(post);
+    } catch (error) {
+      console.error("Error creating post:", error);
+      res.status(500).json({ error: "Failed to create post" });
+    }
+  });
+
+  app.get("/api/circles/:id/posts", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const posts = await storage.getCirclePosts(req.params.id, userId);
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      res.status(500).json({ error: "Failed to fetch posts" });
+    }
+  });
+
+  // Offline sync endpoint
+  app.post("/api/sync/offline", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { actions } = req.body;
+      
+      if (!Array.isArray(actions)) {
+        res.status(400).json({ error: "Actions must be an array" });
+        return;
+      }
+      
+      const results = await storage.processOfflineActions(userId, actions);
+      res.json({ results });
+    } catch (error) {
+      console.error("Error syncing offline actions:", error);
+      res.status(500).json({ error: "Failed to sync offline actions" });
+    }
+  });
+
   return httpServer;
 }

@@ -33,6 +33,8 @@ const formSchema = z.object({
   price: z.string().optional(),
   currency: z.string().default("USD"),
   location: z.string().optional(),
+  purchaseVenue: z.string().optional(),
+  purchaseUrl: z.string().optional(),
   pairings: z.array(z.string()).optional(),
   occasion: z.string().optional(),
   mood: z.string().optional(),
@@ -528,8 +530,30 @@ export default function LogDrink() {
                 id="location"
                 data-testid="input-location"
                 {...register("location")}
-                placeholder="Where purchased or consumed (e.g., Home Cellar, Local Wine Shop)"
+                placeholder="Where consumed (e.g., Home, Restaurant Name)"
               />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="purchaseVenue">Purchase Venue</Label>
+                <Input
+                  id="purchaseVenue"
+                  data-testid="input-purchase-venue"
+                  {...register("purchaseVenue")}
+                  placeholder="Where you bought it (e.g., Total Wine, Online)"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="purchaseUrl">Purchase Link</Label>
+                <Input
+                  id="purchaseUrl"
+                  data-testid="input-purchase-url"
+                  {...register("purchaseUrl")}
+                  placeholder="URL to buy again (optional)"
+                />
+              </div>
             </div>
 
             {/* Pairings */}

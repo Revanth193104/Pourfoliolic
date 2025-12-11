@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import type { User as UserType } from "@shared/schema";
 import {
   AlertDialog,
@@ -103,7 +104,10 @@ export function Sidebar() {
             </h1>
             <p className="text-sm text-muted-foreground">Your tasting journey.</p>
           </div>
-          {isAuthenticated && <NotificationBell />}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {isAuthenticated && <NotificationBell />}
+          </div>
         </div>
       </div>
 

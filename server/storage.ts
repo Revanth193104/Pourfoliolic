@@ -1,6 +1,6 @@
-import { type User, type UpsertUser, type Drink, type InsertDrink, drinks, users, follows, cheers, comments, type Comment } from "@shared/schema";
+import { type User, type UpsertUser, type Drink, type InsertDrink, drinks, users, follows, cheers, comments, type Comment, circles, circleMembers, circleInvites, circlePosts, type Circle, type InsertCircle, type CircleMember, type InsertCircleInvite, type CircleInvite, type InsertCirclePost, type CirclePost } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, or, like, gte, lte, sql, ne, count } from "drizzle-orm";
+import { eq, desc, asc, and, or, like, gte, lte, sql, ne, count, inArray } from "drizzle-orm";
 
 export interface DrinkFilters {
   type?: string;
@@ -486,6 +486,238 @@ export class DatabaseStorage implements IStorage {
     }));
     
     return result;
+  }
+
+  async updateUserTheme(userId: string, theme: string): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ themePreference: theme, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
+  }
+
+  async getRecommendations(userId: string): Promise<(Drink & { reason: string })[]> {
+    const userDrinks = await this.getDrinks({ userId });
+    
+    if (userDrinks.length === 0) {
+      const popularDrinks = await db
+        .select()
+        .from(drinks)
+        .where(eq(drinks.isPrivate, false))
+        .orderBy(desc(drinks.rating))
+        .limit(5);
+      return popularDrinks.map(d => ({ ...d, reason: "Popular in the community" }));
+    }
+    
+    const highRated = userDrinks.filter(d => parseFloat(d.rating) >= 4);
+    const favoriteTypes = Array.from(new Set(highRated.map(d => d.type)));
+    const favoriteMakers = Array.from(new Set(highRated.map(d => d.maker)));
+    
+    const userDrinkIds = userDrinks.map(d => d.id);
+    
+    let recommendations: Drink[] = [];
+    
+    if (favoriteTypes.length > 0) {
+      const typeMatches = await db
+        .select()
+        .from(drinks)
+        .where(and(
+          eq(drinks.isPrivate, false),
+          inArray(drinks.type, favoriteTypes),
+          sql`${drinks.id} NOT IN (${userDrinkIds.map(id => `'${id}'`).join(',') || "''"})`,
+          gte(drinks.rating, "4.0")
+        ))
+        .orderBy(desc(drinks.rating))
+        .limit(5);
+      recommendations = typeMatches;
+    }
+    
+    if (recommendations.length < 5 && favoriteMakers.length > 0) {
+      const makerMatches = await db
+        .select()
+        .from(drinks)
+        .where(and(
+          eq(drinks.isPrivate, false),
+          inArray(drinks.maker, favoriteMakers),
+          sql`${drinks.id} NOT IN (${userDrinkIds.map(id => `'${id}'`).join(',') || "''"})`,
+        ))
+        .orderBy(desc(drinks.rating))
+        .limit(5 - recommendations.length);
+      recommendations = [...recommendations, ...makerMatches];
+    }
+    
+    return recommendations.map(d => ({
+      ...d,
+      reason: favoriteTypes.includes(d.type) 
+        ? `Because you like ${d.type}s` 
+        : `From a maker you enjoy`
+    }));
+  }
+
+  async getUserCircles(userId: string): Promise<(Circle & { memberCount: number; role: string })[]> {
+    const memberCircles = await db
+      .select({
+        circle: circles,
+        member: circleMembers
+      })
+      .from(circleMembers)
+      .innerJoin(circles, eq(circleMembers.circleId, circles.id))
+      .where(eq(circleMembers.userId, userId));
+    
+    const result = await Promise.all(memberCircles.map(async (row) => {
+      const [memberCount] = await db
+        .select({ count: count() })
+        .from(circleMembers)
+        .where(eq(circleMembers.circleId, row.circle.id));
+      
+      return {
+        ...row.circle,
+        memberCount: memberCount?.count || 0,
+        role: row.member.role || "member"
+      };
+    }));
+    
+    return result;
+  }
+
+  async createCircle(data: InsertCircle): Promise<Circle> {
+    const [circle] = await db.insert(circles).values(data).returning();
+    await db.insert(circleMembers).values({
+      circleId: circle.id,
+      userId: data.creatorId,
+      role: "admin"
+    });
+    return circle;
+  }
+
+  async getCircleById(circleId: string, userId: string): Promise<(Circle & { members: (CircleMember & { user: User })[] }) | null> {
+    const [circle] = await db.select().from(circles).where(eq(circles.id, circleId));
+    if (!circle) return null;
+    
+    const isMember = await db
+      .select()
+      .from(circleMembers)
+      .where(and(eq(circleMembers.circleId, circleId), eq(circleMembers.userId, userId)));
+    
+    if (circle.isPrivate && isMember.length === 0) return null;
+    
+    const members = await db
+      .select({ member: circleMembers, user: users })
+      .from(circleMembers)
+      .innerJoin(users, eq(circleMembers.userId, users.id))
+      .where(eq(circleMembers.circleId, circleId));
+    
+    return {
+      ...circle,
+      members: members.map(m => ({ ...m.member, user: m.user }))
+    };
+  }
+
+  async createCircleInvite(data: InsertCircleInvite): Promise<CircleInvite> {
+    const [invite] = await db.insert(circleInvites).values(data).returning();
+    return invite;
+  }
+
+  async getPendingCircleInvites(userId: string): Promise<(CircleInvite & { circle: Circle; inviter: User })[]> {
+    const invites = await db
+      .select({ invite: circleInvites, circle: circles, inviter: users })
+      .from(circleInvites)
+      .innerJoin(circles, eq(circleInvites.circleId, circles.id))
+      .innerJoin(users, eq(circleInvites.inviterId, users.id))
+      .where(and(eq(circleInvites.inviteeId, userId), eq(circleInvites.status, "pending")));
+    
+    return invites.map(row => ({
+      ...row.invite,
+      circle: row.circle,
+      inviter: row.inviter
+    }));
+  }
+
+  async acceptCircleInvite(inviteId: string, userId: string): Promise<void> {
+    const [invite] = await db
+      .select()
+      .from(circleInvites)
+      .where(and(eq(circleInvites.id, inviteId), eq(circleInvites.inviteeId, userId)));
+    
+    if (!invite) throw new Error("Invite not found");
+    
+    await db.update(circleInvites).set({ status: "accepted" }).where(eq(circleInvites.id, inviteId));
+    await db.insert(circleMembers).values({
+      circleId: invite.circleId,
+      userId: userId,
+      role: "member"
+    });
+  }
+
+  async declineCircleInvite(inviteId: string, userId: string): Promise<void> {
+    await db
+      .update(circleInvites)
+      .set({ status: "declined" })
+      .where(and(eq(circleInvites.id, inviteId), eq(circleInvites.inviteeId, userId)));
+  }
+
+  async createCirclePost(data: InsertCirclePost): Promise<CirclePost> {
+    const [post] = await db.insert(circlePosts).values(data).returning();
+    return post;
+  }
+
+  async getCirclePosts(circleId: string, userId: string): Promise<(CirclePost & { user: User; drink?: Drink })[]> {
+    const isMember = await db
+      .select()
+      .from(circleMembers)
+      .where(and(eq(circleMembers.circleId, circleId), eq(circleMembers.userId, userId)));
+    
+    if (isMember.length === 0) return [];
+    
+    const posts = await db
+      .select({ post: circlePosts, user: users })
+      .from(circlePosts)
+      .innerJoin(users, eq(circlePosts.userId, users.id))
+      .where(eq(circlePosts.circleId, circleId))
+      .orderBy(desc(circlePosts.createdAt));
+    
+    const result = await Promise.all(posts.map(async (row) => {
+      let drink: Drink | undefined;
+      if (row.post.drinkId) {
+        drink = await this.getDrinkById(row.post.drinkId);
+      }
+      return {
+        ...row.post,
+        user: row.user,
+        drink
+      };
+    }));
+    
+    return result;
+  }
+
+  async processOfflineActions(userId: string, actions: { tempId: string; actionType: string; payload: any }[]): Promise<{ tempId: string; success: boolean; result?: any; error?: string }[]> {
+    const results = [];
+    
+    for (const action of actions) {
+      try {
+        let result;
+        switch (action.actionType) {
+          case "create_drink":
+            result = await this.createDrink({ ...action.payload, userId });
+            break;
+          case "update_drink":
+            result = await this.updateDrink(action.payload.id, action.payload);
+            break;
+          case "delete_drink":
+            result = await this.deleteDrink(action.payload.id);
+            break;
+          default:
+            throw new Error(`Unknown action type: ${action.actionType}`);
+        }
+        results.push({ tempId: action.tempId, success: true, result });
+      } catch (error: any) {
+        results.push({ tempId: action.tempId, success: false, error: error.message });
+      }
+    }
+    
+    return results;
   }
 }
 

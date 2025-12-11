@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  themePreference: text("theme_preference").default("system"), // "light", "dark", or "system"
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -44,6 +45,8 @@ export const drinks = pgTable("drinks", {
   price: decimal("price", { precision: 10, scale: 2 }),
   currency: text("currency").default("USD"),
   location: text("location"),
+  purchaseVenue: text("purchase_venue"),
+  purchaseUrl: text("purchase_url"),
   pairings: text("pairings").array(),
   occasion: text("occasion"),
   mood: text("mood"),
@@ -126,3 +129,72 @@ export const circleMembers = pgTable("circle_members", {
 });
 
 export type CircleMember = typeof circleMembers.$inferSelect;
+
+// Circle invites
+export const circleInvites = pgTable("circle_invites", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  circleId: varchar("circle_id").references(() => circles.id).notNull(),
+  inviterId: varchar("inviter_id").references(() => users.id).notNull(),
+  inviteeId: varchar("invitee_id").references(() => users.id).notNull(),
+  status: text("status").default("pending"), // "pending", "accepted", "declined"
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertCircleInviteSchema = createInsertSchema(circleInvites).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCircleInvite = z.infer<typeof insertCircleInviteSchema>;
+export type CircleInvite = typeof circleInvites.$inferSelect;
+
+// Circle posts (shared drinks/content within circles)
+export const circlePosts = pgTable("circle_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  circleId: varchar("circle_id").references(() => circles.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  drinkId: varchar("drink_id").references(() => drinks.id),
+  content: text("content"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertCirclePostSchema = createInsertSchema(circlePosts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCirclePost = z.infer<typeof insertCirclePostSchema>;
+export type CirclePost = typeof circlePosts.$inferSelect;
+
+// Offline actions queue for sync
+export const offlineActions = pgTable("offline_actions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tempId: varchar("temp_id").notNull(), // Client-generated ID to prevent duplicates
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  actionType: text("action_type").notNull(), // "create_drink", "update_drink", "delete_drink"
+  payload: jsonb("payload").notNull(),
+  status: text("status").default("pending"), // "pending", "synced", "failed"
+  createdAt: timestamp("created_at").defaultNow(),
+  syncedAt: timestamp("synced_at"),
+});
+
+export type OfflineAction = typeof offlineActions.$inferSelect;
+
+// Price history for tracking price changes
+export const priceHistory = pgTable("price_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  drinkId: varchar("drink_id").references(() => drinks.id).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("USD"),
+  venue: text("venue"),
+  url: text("url"),
+  capturedAt: timestamp("captured_at").defaultNow(),
+});
+
+export const insertPriceHistorySchema = createInsertSchema(priceHistory).omit({
+  id: true,
+  capturedAt: true,
+});
+
+export type InsertPriceHistory = z.infer<typeof insertPriceHistorySchema>;
+export type PriceHistory = typeof priceHistory.$inferSelect;

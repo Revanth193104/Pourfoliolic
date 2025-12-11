@@ -16,6 +16,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -203,9 +204,11 @@ function AppWithIntro() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AppWithIntro />
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <AppWithIntro />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

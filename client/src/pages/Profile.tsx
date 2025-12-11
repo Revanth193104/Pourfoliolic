@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, LogOut, Edit2, Check, X, Loader2, AtSign } from "lucide-react";
+import { getIdToken } from "@/lib/firebase";
+import { User, Mail, LogOut, Edit2, Check, X, Loader2, AtSign, Download, Settings } from "lucide-react";
 
 export default function Profile() {
   const { user, isLoading, refetchUser, logout } = useAuth();
@@ -96,6 +97,41 @@ export default function Profile() {
       window.location.replace("/");
     } catch (error) {
       console.error("Logout failed:", error);
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      const token = await getIdToken();
+      const response = await fetch("/api/drinks/export?format=csv", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "pourfoliolic-tastings.csv";
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast({
+          title: "Export complete!",
+          description: "Your tasting history has been downloaded.",
+        });
+      } else {
+        throw new Error("Export failed");
+      }
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "Unable to export your data. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -232,6 +268,38 @@ export default function Profile() {
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Data & Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+            <div>
+              <h4 className="font-medium">Export Your Data</h4>
+              <p className="text-sm text-muted-foreground">
+                Download all your tasting notes as a CSV file
+              </p>
+            </div>
+            <Button onClick={handleExportData} variant="outline" data-testid="button-export-data">
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+          </div>
+          
+          <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+            <div>
+              <h4 className="font-medium">Theme Preference</h4>
+              <p className="text-sm text-muted-foreground">
+                Switch between light and dark mode using the toggle in the sidebar
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
