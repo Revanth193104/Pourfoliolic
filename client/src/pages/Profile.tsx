@@ -277,7 +277,7 @@ export default function Profile() {
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
                   <Input
                     value={newUsername}
-                    onChange={(e) => setNewUsername(e.target.value.toLowerCase())}
+                    onChange={(e) => setNewUsername(e.target.value)}
                     className="pl-8 pr-10"
                     placeholder="your_username"
                     data-testid="input-edit-username"
