@@ -48,6 +48,11 @@ function UserSection({ user }: { user: UserType }) {
           <p className="text-sm font-medium truncate" data-testid="text-user-name">
             {user.firstName || user.email || "User"}
           </p>
+          {user.username && (
+            <p className="text-xs text-muted-foreground truncate" data-testid="text-user-username">
+              @{user.username}
+            </p>
+          )}
         </div>
       </div>
       <AlertDialog>
