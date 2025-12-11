@@ -21,6 +21,28 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/settings/profile-image", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const { imageData } = req.body;
+      
+      if (!imageData || typeof imageData !== "string") {
+        res.status(400).json({ error: "Image data is required" });
+        return;
+      }
+
+      const updated = await storage.updateProfileImage(userId, imageData);
+      if (updated) {
+        res.json(updated);
+      } else {
+        res.status(404).json({ error: "User not found" });
+      }
+    } catch (error) {
+      console.error("Error updating profile image:", error);
+      res.status(500).json({ error: "Failed to update profile image" });
+    }
+  });
+
   app.post("/api/drinks", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = (req as AuthenticatedRequest).user!.uid;

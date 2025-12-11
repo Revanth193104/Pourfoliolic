@@ -28,6 +28,7 @@ export interface DrinkStats {
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<{ user: User; isNewUser: boolean }>;
+  updateProfileImage(userId: string, imageData: string): Promise<User | undefined>;
   
   createDrink(drink: InsertDrink): Promise<Drink>;
   getDrinks(filters?: DrinkFilters, sortBy?: string, sortOrder?: "asc" | "desc"): Promise<Drink[]>;
@@ -96,6 +97,15 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return { user, isNewUser };
+  }
+
+  async updateProfileImage(userId: string, imageData: string): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ profileImageUrl: imageData })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
   }
 
   async createDrink(drink: InsertDrink): Promise<Drink> {

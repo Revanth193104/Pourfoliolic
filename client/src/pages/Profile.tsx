@@ -19,6 +19,7 @@ export default function Profile() {
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
   const [isSavingUsername, setIsSavingUsername] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   useEffect(() => {
     if (user?.username) {
@@ -102,6 +103,49 @@ export default function Profile() {
     }
   };
 
+  const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64String = event.target?.result as string;
+        
+        const response = await fetch("/api/settings/profile-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageData: base64String }),
+        });
+
+        if (response.ok) {
+          await refetchUser();
+          toast({
+            title: "Profile picture updated!",
+            description: "Your new profile picture is now visible.",
+          });
+        } else {
+          const data = await response.json();
+          toast({
+            title: "Error",
+            description: data.error || "Failed to update profile picture",
+            variant: "destructive",
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile picture",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleExportData = async () => {
     try {
       const token = await getIdToken();
@@ -180,10 +224,24 @@ export default function Profile() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={user.profileImageUrl || undefined} alt={displayName} />
-              <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={user.profileImageUrl || undefined} alt={displayName} />
+                <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
+              </Avatar>
+              <label htmlFor="profile-image-input" className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:bg-primary/90 transition-colors" data-testid="button-upload-profile-image">
+                <input
+                  id="profile-image-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleProfileImageChange}
+                  disabled={isUploadingImage}
+                  data-testid="input-profile-image"
+                />
+                <Edit2 className="h-4 w-4" />
+              </label>
+            </div>
             <div>
               <h3 className="text-xl font-semibold" data-testid="text-profile-name">{displayName}</h3>
               {user.username && (
