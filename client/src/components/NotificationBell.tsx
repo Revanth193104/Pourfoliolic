@@ -193,7 +193,7 @@ export function NotificationBell({ firebaseUser, isAuthenticated }: { firebaseUs
                       </div>
                       <p className="font-medium text-sm">{getNotificationMessage(notification)}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(notification.createdAt).toLocaleDateString()}
+                        {notification.createdAt ? new Date(notification.createdAt).toLocaleDateString() : "Just now"}
                       </p>
                     </div>
                   </div>

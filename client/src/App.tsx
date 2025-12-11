@@ -19,6 +19,7 @@ import { queryClient } from "@/lib/queryClient";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { useAppUpdateChecker } from "@/hooks/useAppUpdate";
 import { motion, AnimatePresence } from "framer-motion";
 
 const INTRO_MESSAGES = [
@@ -105,6 +106,7 @@ function IntroSplash({ onComplete, userName }: { onComplete: () => void; userNam
 
 function AppLayout() {
   const { isAuthenticated, isLoading } = useAuth();
+  useAppUpdateChecker();
 
   if (isLoading) {
     return (

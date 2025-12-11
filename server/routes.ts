@@ -1049,5 +1049,14 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/version", async (req: Request, res: Response) => {
+    try {
+      res.json({ version: "1.0.0" });
+    } catch (error) {
+      console.error("Error fetching version:", error);
+      res.status(500).json({ error: "Failed to fetch version" });
+    }
+  });
+
   return httpServer;
 }
