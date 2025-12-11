@@ -221,19 +221,19 @@ export default function Chat() {
   }
 
   return (
-    <div className="space-y-6" data-testid="page-chat">
+    <div className="space-y-6 flex flex-col min-h-screen" data-testid="page-chat">
       <div className="flex items-center gap-3">
         <MessageCircle className="h-8 w-8 text-primary" />
         <h1 className="text-3xl font-bold">Messages</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
-        <Card className="lg:col-span-1 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-hidden">
+        <Card className="lg:col-span-1 overflow-hidden flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Conversations</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-[calc(100vh-320px)]">
+          <CardContent className="p-0 flex-1 overflow-hidden">
+            <ScrollArea className="h-full">
               {conversations.length === 0 && connections.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground">
                   <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
