@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Wine, Beer, Martini, GlassWater, Star, Search, Users, 
   Heart, MessageCircle, UserPlus, TrendingUp, Sparkles, Clock,
-  Check, X, UserMinus, Bell
+  Check, X, UserMinus, Bell, UserCheck, UsersRound
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { getIdToken } from "@/lib/firebase";
@@ -937,30 +937,31 @@ export default function Community() {
           {isAuthenticated && (
             <Card>
               <CardContent className="pt-6">
-                <div className="flex justify-center gap-8 mb-4">
+                <div className="flex justify-center gap-12 mb-4">
                   <button
                     onClick={() => setShowFollowers(!showFollowers)}
-                    className="text-center hover:opacity-80 transition-opacity"
+                    className={`text-center hover:opacity-80 transition-all flex flex-col items-center gap-1 p-3 rounded-lg ${showFollowers ? 'bg-primary/10' : ''}`}
                     data-testid="button-show-followers"
                   >
+                    <UsersRound className={`h-6 w-6 ${showFollowers ? 'text-primary' : 'text-muted-foreground'}`} />
                     <p className="text-2xl font-bold">{followers.length}</p>
-                    <p className="text-sm text-muted-foreground">Followers</p>
+                    <p className="text-xs text-muted-foreground">Followers</p>
                   </button>
-                  <div className="w-px bg-border" />
                   <button
                     onClick={() => setShowFollowing(!showFollowing)}
-                    className="text-center hover:opacity-80 transition-opacity"
+                    className={`text-center hover:opacity-80 transition-all flex flex-col items-center gap-1 p-3 rounded-lg ${showFollowing ? 'bg-primary/10' : ''}`}
                     data-testid="button-show-following"
                   >
+                    <UserCheck className={`h-6 w-6 ${showFollowing ? 'text-primary' : 'text-muted-foreground'}`} />
                     <p className="text-2xl font-bold">{following.length}</p>
-                    <p className="text-sm text-muted-foreground">Following</p>
+                    <p className="text-xs text-muted-foreground">Following</p>
                   </button>
                 </div>
 
                 {showFollowers && (
                   <div className="border-t pt-4 mt-4">
                     <h4 className="font-medium mb-3 flex items-center gap-2">
-                      <Users className="h-4 w-4" />
+                      <UsersRound className="h-4 w-4 text-primary" />
                       Followers
                     </h4>
                     {followers.length > 0 ? (
@@ -1003,7 +1004,7 @@ export default function Community() {
                 {showFollowing && (
                   <div className="border-t pt-4 mt-4">
                     <h4 className="font-medium mb-3 flex items-center gap-2">
-                      <UserPlus className="h-4 w-4" />
+                      <UserCheck className="h-4 w-4 text-primary" />
                       Following
                     </h4>
                     {following.length > 0 ? (
