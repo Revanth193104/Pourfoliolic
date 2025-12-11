@@ -1033,54 +1033,6 @@ export default function Community() {
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Suggested to Follow</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {suggestedUsers.length > 0 ? (
-                <div className="space-y-4">
-                  {suggestedUsers.map((profile) => (
-                    <div key={profile.id} className="flex items-center justify-between">
-                      <div 
-                        className="flex items-center gap-3 cursor-pointer hover:opacity-80"
-                        onClick={() => fetchUserProfile(profile.id)}
-                      >
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={profile.profileImageUrl || undefined} />
-                          <AvatarFallback>{getUserInitial(profile)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium hover:underline">{getUserDisplayName(profile)}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {profile.drinksCount} tastings
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant={profile.followStatus === "accepted" ? "secondary" : profile.followStatus === "pending" ? "outline" : "default"}
-                        size="sm"
-                        onClick={() => handleFollow(profile.id, profile.followStatus)}
-                        data-testid={`button-follow-${profile.id}`}
-                      >
-                        <UserPlus className="h-4 w-4 mr-1" />
-                        {profile.followStatus === "accepted" ? "Following" : profile.followStatus === "pending" ? "Requested" : "Follow"}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">
-                    {isAuthenticated 
-                      ? "No suggestions yet. More users will appear as the community grows!"
-                      : "Sign in to discover other enthusiasts"}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
 
