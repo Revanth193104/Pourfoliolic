@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/components/ThemeProvider";
 import { getIdToken } from "@/lib/firebase";
-import { User, Mail, LogOut, Edit2, Check, X, Loader2, AtSign, Download, Settings } from "lucide-react";
+import { User, Mail, LogOut, Edit2, Check, X, Loader2, AtSign, Download, Settings, Sun, Moon, Monitor } from "lucide-react";
 
 export default function Profile() {
   const { user, isLoading, refetchUser, logout } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
@@ -297,8 +299,37 @@ export default function Profile() {
             <div>
               <h4 className="font-medium">Theme Preference</h4>
               <p className="text-sm text-muted-foreground">
-                Switch between light and dark mode using the toggle in the sidebar
+                Choose your preferred appearance
               </p>
+            </div>
+            <div className="flex gap-1">
+              <Button 
+                variant={theme === "light" ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setTheme("light")}
+                data-testid="button-theme-light"
+              >
+                <Sun className="h-4 w-4 mr-1" />
+                Light
+              </Button>
+              <Button 
+                variant={theme === "dark" ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setTheme("dark")}
+                data-testid="button-theme-dark"
+              >
+                <Moon className="h-4 w-4 mr-1" />
+                Dark
+              </Button>
+              <Button 
+                variant={theme === "system" ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setTheme("system")}
+                data-testid="button-theme-system"
+              >
+                <Monitor className="h-4 w-4 mr-1" />
+                Auto
+              </Button>
             </div>
           </div>
         </CardContent>
