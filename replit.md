@@ -39,7 +39,12 @@ The main data entities are:
 - `follows`: User relationships with status field ("pending" or "accepted") for follow request approval system
 - `cheers`: Likes on drinks from users
 - `comments`: User comments on drink entries
-- `circles`: Tasting circles/micro-communities (planned feature)
+- `circles`: Tasting circles/micro-communities for sharing tastings with private groups
+- `circle_members`: Membership tracking for circles
+- `circle_invites`: Pending invitations to join circles
+- `circle_posts`: Posts shared within circles
+- `offline_actions`: Queue for syncing actions made offline
+- `price_history`: Historical price tracking for price comparison
 
 ### Community Features
 
@@ -65,6 +70,32 @@ The main data entities are:
 - `PUT /api/drinks/:id` - Update drink
 - `DELETE /api/drinks/:id` - Delete drink
 - `GET /api/stats` - Get aggregate statistics
+- `GET /api/drinks/export` - Export tasting history as CSV
+- `PATCH /api/settings/theme` - Update user theme preference
+- `GET /api/recommendations` - Get personalized drink recommendations
+
+### New Features (December 2025)
+
+#### Dark Mode
+- ThemeProvider component wraps the app with theme context
+- ThemeToggle component in sidebar for switching between light/dark/system modes
+- User preference persists to both localStorage and user profile in database
+- Key files: `client/src/components/ThemeProvider.tsx`, `client/src/components/ThemeToggle.tsx`
+
+#### Export Data
+- Users can download their complete tasting history as CSV
+- Available on the Profile page under "Data & Settings"
+- Includes all drink details: name, maker, type, ratings, tasting notes, prices
+
+#### Price Tracking
+- New fields: `purchaseVenue` and `purchaseUrl` for tracking where drinks were purchased
+- Allows users to remember where to buy their favorite drinks again
+- Price history table tracks price changes over time
+
+#### Tasting Circles (Backend Ready)
+- Private groups for sharing tastings with friends
+- Database tables: circles, circle_members, circle_invites, circle_posts
+- Invite system with pending/accepted/declined status
 
 ### Build Process
 - Client builds to `dist/public` via Vite
