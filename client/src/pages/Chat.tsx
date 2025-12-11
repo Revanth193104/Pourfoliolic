@@ -389,7 +389,7 @@ export default function Chat() {
                 </div>
               </ScrollArea>
               
-              <div className="p-4 border-t">
+              <div className="sticky bottom-0 p-4 border-t bg-card">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
