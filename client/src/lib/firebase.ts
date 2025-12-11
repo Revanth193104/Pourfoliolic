@@ -16,7 +16,7 @@ import {
 
 declare global {
   interface Window {
-    FIREBASE_CONFIG?: {
+    firebaseConfig?: {
       apiKey: string;
       authDomain: string;
       projectId: string;
