@@ -131,25 +131,27 @@ function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/5 text-foreground flex font-sans antialiased">
-      <Sidebar />
-      <div className="flex-1 md:ml-64 pb-16 md:pb-0 relative">
-        <div className="absolute inset-0 bg-gradient-to-t from-orange-500/3 via-transparent to-transparent pointer-events-none" />
-        <main className="container mx-auto p-4 md:p-8 max-w-7xl relative z-10">
-          <PageTransition>
-            <Switch>
-              <Route path="/" component={Home} />
-              <Route path="/log" component={LogDrink} />
-              <Route path="/edit/:id" component={EditDrink} />
-              <Route path="/cellar" component={Cellar} />
-              <Route path="/cocktails" component={CocktailLibrary} />
-              <Route path="/community" component={Community} />
-              <Route path="/chat" component={Chat} />
-              <Route path="/profile" component={Profile} />
-              <Route component={NotFound} />
-            </Switch>
-          </PageTransition>
-        </main>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/5 text-foreground flex flex-col font-sans antialiased">
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 md:ml-64 relative overflow-auto">
+          <div className="absolute inset-0 bg-gradient-to-t from-orange-500/3 via-transparent to-transparent pointer-events-none" />
+          <main className="container mx-auto p-4 md:p-8 max-w-7xl relative z-10">
+            <PageTransition>
+              <Switch>
+                <Route path="/" component={Home} />
+                <Route path="/log" component={LogDrink} />
+                <Route path="/edit/:id" component={EditDrink} />
+                <Route path="/cellar" component={Cellar} />
+                <Route path="/cocktails" component={CocktailLibrary} />
+                <Route path="/community" component={Community} />
+                <Route path="/chat" component={Chat} />
+                <Route path="/profile" component={Profile} />
+                <Route component={NotFound} />
+              </Switch>
+            </PageTransition>
+          </main>
+        </div>
       </div>
       <MobileNav />
       <Toaster />
