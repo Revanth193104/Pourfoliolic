@@ -1,0 +1,171 @@
+Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+firebase.ts:51 Cross-Origin-Opener-Policy policy would block the window.closed call.
+poll @ firebase_auth.js?v=f1369b1c:7067
+setTimeout
+poll @ firebase_auth.js?v=f1369b1c:7082
+pollUserCancellation @ firebase_auth.js?v=f1369b1c:7084
+onExecution @ firebase_auth.js?v=f1369b1c:7042
+await in onExecution
+(anonymous) @ firebase_auth.js?v=f1369b1c:6894
+await in (anonymous)
+execute @ firebase_auth.js?v=f1369b1c:6890
+executeNotNull @ firebase_auth.js?v=f1369b1c:7010
+signInWithPopup @ firebase_auth.js?v=f1369b1c:6975
+signInWithGoogle @ firebase.ts:51
+await in signInWithGoogle
+login @ useAuth.ts:57
+handleGoogleSignIn @ Landing.tsx:36
+executeDispatch @ react-dom_client.js?v=f1369b1c:13622
+runWithFiberInDEV @ react-dom_client.js?v=f1369b1c:997
+processDispatchQueue @ react-dom_client.js?v=f1369b1c:13658
+(anonymous) @ react-dom_client.js?v=f1369b1c:14071
+batchedUpdates$1 @ react-dom_client.js?v=f1369b1c:2626
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=f1369b1c:13763
+dispatchEvent @ react-dom_client.js?v=f1369b1c:16784
+dispatchDiscreteEvent @ react-dom_client.js?v=f1369b1c:16765
+<button>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f1369b1c:247
+_c @ button.tsx:55
+react_stack_bottom_frame @ react-dom_client.js?v=f1369b1c:18509
+renderWithHooks @ react-dom_client.js?v=f1369b1c:5654
+updateForwardRef @ react-dom_client.js?v=f1369b1c:7198
+beginWork @ react-dom_client.js?v=f1369b1c:8735
+runWithFiberInDEV @ react-dom_client.js?v=f1369b1c:997
+performUnitOfWork @ react-dom_client.js?v=f1369b1c:12561
+workLoopSync @ react-dom_client.js?v=f1369b1c:12424
+renderRootSync @ react-dom_client.js?v=f1369b1c:12408
+performWorkOnRoot @ react-dom_client.js?v=f1369b1c:11766
+performSyncWorkOnRoot @ react-dom_client.js?v=f1369b1c:13517
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f1369b1c:13414
+processRootScheduleInMicrotask @ react-dom_client.js?v=f1369b1c:13437
+(anonymous) @ react-dom_client.js?v=f1369b1c:13531
+<Button>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f1369b1c:247
+Landing @ Landing.tsx:153
+react_stack_bottom_frame @ react-dom_client.js?v=f1369b1c:18509
+renderWithHooks @ react-dom_client.js?v=f1369b1c:5654
+updateFunctionComponent @ react-dom_client.js?v=f1369b1c:7475
+beginWork @ react-dom_client.js?v=f1369b1c:8525
+runWithFiberInDEV @ react-dom_client.js?v=f1369b1c:997
+performUnitOfWork @ react-dom_client.js?v=f1369b1c:12561
+workLoopSync @ react-dom_client.js?v=f1369b1c:12424
+renderRootSync @ react-dom_client.js?v=f1369b1c:12408
+performWorkOnRoot @ react-dom_client.js?v=f1369b1c:11766
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=f1369b1c:13505
+performWorkUntilDeadline @ react-dom_client.js?v=f1369b1c:36
+<Landing>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f1369b1c:247
+AppLayout @ App.tsx:123
+react_stack_bottom_frame @ react-dom_client.js?v=f1369b1c:18509
+renderWithHooks @ react-dom_client.js?v=f1369b1c:5654
+updateFunctionComponent @ react-dom_client.js?v=f1369b1c:7475
+beginWork @ react-dom_client.js?v=f1369b1c:8525
+runWithFiberInDEV @ react-dom_client.js?v=f1369b1c:997
+performUnitOfWork @ react-dom_client.js?v=f1369b1c:12561
+workLoopSync @ react-dom_client.js?v=f1369b1c:12424
+renderRootSync @ react-dom_client.js?v=f1369b1c:12408
+performWorkOnRoot @ react-dom_client.js?v=f1369b1c:11766
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=f1369b1c:13505
+performWorkUntilDeadline @ react-dom_client.js?v=f1369b1c:36Understand this error
+firebase.ts:51 Cross-Origin-Opener-Policy policy would block the window.closed call.
+poll @ firebase_auth.js?v=f1369b1c:7067
+setTimeout
+poll @ firebase_auth.js?v=f1369b1c:7082
+pollUserCancellation @ firebase_auth.js?v=f1369b1c:7084
+onExecution @ firebase_auth.js?v=f1369b1c:7042
+await in onExecution
+(anonymous) @ firebase_auth.js?v=f1369b1c:6894
+await in (anonymous)
+execute @ firebase_auth.js?v=f1369b1c:6890
+executeNotNull @ firebase_auth.js?v=f1369b1c:7010
+signInWithPopup @ firebase_auth.js?v=f1369b1c:6975
+signInWithGoogle @ firebase.ts:51
+await in signInWithGoogle
+login @ useAuth.ts:57
+handleGoogleSignIn @ Landing.tsx:36
+executeDispatch @ react-dom_client.js?v=f1369b1c:13622
+runWithFiberInDEV @ react-dom_client.js?v=f1369b1c:997
+processDispatchQueue @ react-dom_client.js?v=f1369b1c:13658
+(anonymous) @ react-dom_client.js?v=f1369b1c:14071
+batchedUpdates$1 @ react-dom_client.js?v=f1369b1c:2626
+dispatchEventForPluginEventSystem @ react-dom_client.js?v=f1369b1c:13763
+dispatchEvent @ react-dom_client.js?v=f1369b1c:16784
+dispatchDiscreteEvent @ react-dom_client.js?v=f1369b1c:16765
+<button>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f1369b1c:247
+_c @ button.tsx:55
+react_stack_bottom_frame @ react-dom_client.js?v=f1369b1c:18509
+renderWithHooks @ react-dom_client.js?v=f1369b1c:5654
+updateForwardRef @ react-dom_client.js?v=f1369b1c:7198
+beginWork @ react-dom_client.js?v=f1369b1c:8735
+runWithFiberInDEV @ react-dom_client.js?v=f1369b1c:997
+performUnitOfWork @ react-dom_client.js?v=f1369b1c:12561
+workLoopSync @ react-dom_client.js?v=f1369b1c:12424
+renderRootSync @ react-dom_client.js?v=f1369b1c:12408
+performWorkOnRoot @ react-dom_client.js?v=f1369b1c:11766
+performSyncWorkOnRoot @ react-dom_client.js?v=f1369b1c:13517
+flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=f1369b1c:13414
+processRootScheduleInMicrotask @ react-dom_client.js?v=f1369b1c:13437
+(anonymous) @ react-dom_client.js?v=f1369b1c:13531
+<Button>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f1369b1c:247
+Landing @ Landing.tsx:153
+react_stack_bottom_frame @ react-dom_client.js?v=f1369b1c:18509
+renderWithHooks @ react-dom_client.js?v=f1369b1c:5654
+updateFunctionComponent @ react-dom_client.js?v=f1369b1c:7475
+beginWork @ react-dom_client.js?v=f1369b1c:8525
+runWithFiberInDEV @ react-dom_client.js?v=f1369b1c:997
+performUnitOfWork @ react-dom_client.js?v=f1369b1c:12561
+workLoopSync @ react-dom_client.js?v=f1369b1c:12424
+renderRootSync @ react-dom_client.js?v=f1369b1c:12408
+performWorkOnRoot @ react-dom_client.js?v=f1369b1c:11766
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=f1369b1c:13505
+performWorkUntilDeadline @ react-dom_client.js?v=f1369b1c:36
+<Landing>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=f1369b1c:247
+AppLayout @ App.tsx:123
+react_stack_bottom_frame @ react-dom_client.js?v=f1369b1c:18509
+renderWithHooks @ react-dom_client.js?v=f1369b1c:5654
+updateFunctionComponent @ react-dom_client.js?v=f1369b1c:7475
+beginWork @ react-dom_client.js?v=f1369b1c:8525
+runWithFiberInDEV @ react-dom_client.js?v=f1369b1c:997
+performUnitOfWork @ react-dom_client.js?v=f1369b1c:12561
+workLoopSync @ react-dom_client.js?v=f1369b1c:12424
+renderRootSync @ react-dom_client.js?v=f1369b1c:12408
+performWorkOnRoot @ react-dom_client.js?v=f1369b1c:11766
+performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=f1369b1c:13505
+performWorkUntilDeadline @ react-dom_client.js?v=f1369b1c:36Understand this error
+cb=gapi.loaded_0?le=scs:195 Cross-Origin-Opener-Policy policy would block the window.close call.
+close @ firebase_auth.js?v=f1369b1c:7531
+cleanUp @ firebase_auth.js?v=f1369b1c:7056
+unregisterAndCleanUp @ firebase_auth.js?v=f1369b1c:6959
+resolve @ firebase_auth.js?v=f1369b1c:6947
+onAuthEvent @ firebase_auth.js?v=f1369b1c:6917
+await in onAuthEvent
+sendToConsumer @ firebase_auth.js?v=f1369b1c:7287
+(anonymous) @ firebase_auth.js?v=f1369b1c:7268
+onEvent @ firebase_auth.js?v=f1369b1c:7265
+(anonymous) @ firebase_auth.js?v=f1369b1c:7693
+Sm @ cb=gapi.loaded_0?le=scs:195
+(anonymous) @ cb=gapi.loaded_0?le=scs:195
+il @ cb=gapi.loaded_0?le=scs:174
+rl @ cb=gapi.loaded_0?le=scs:174
+Mk @ cb=gapi.loaded_0?le=scs:175
+Sk.ZH @ cb=gapi.loaded_0?le=scs:168Understand this error
+cb=gapi.loaded_0?le=scs:195 Cross-Origin-Opener-Policy policy would block the window.close call.
+close @ firebase_auth.js?v=f1369b1c:7531
+cleanUp @ firebase_auth.js?v=f1369b1c:7056
+unregisterAndCleanUp @ firebase_auth.js?v=f1369b1c:6959
+resolve @ firebase_auth.js?v=f1369b1c:6947
+onAuthEvent @ firebase_auth.js?v=f1369b1c:6917
+await in onAuthEvent
+sendToConsumer @ firebase_auth.js?v=f1369b1c:7287
+(anonymous) @ firebase_auth.js?v=f1369b1c:7268
+onEvent @ firebase_auth.js?v=f1369b1c:7265
+(anonymous) @ firebase_auth.js?v=f1369b1c:7693
+Sm @ cb=gapi.loaded_0?le=scs:195
+(anonymous) @ cb=gapi.loaded_0?le=scs:195
+il @ cb=gapi.loaded_0?le=scs:174
+rl @ cb=gapi.loaded_0?le=scs:174
+Mk @ cb=gapi.loaded_0?le=scs:175
+Sk.ZH @ cb=gapi.loaded_0?le=scs:168Understand this error
