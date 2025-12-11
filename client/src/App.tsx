@@ -1,5 +1,6 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Link } from "wouter";
 import { useState, useEffect } from "react";
+import { User as UserIcon } from "lucide-react";
 import { Sidebar, MobileNav } from "@/components/Sidebar";
 import { PageTransition } from "@/components/PageTransition";
 import Home from "@/pages/Home";
@@ -105,7 +106,7 @@ function IntroSplash({ onComplete, userName }: { onComplete: () => void; userNam
 }
 
 function AppLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   useAppUpdateChecker();
 
   if (isLoading) {
@@ -136,6 +137,27 @@ function AppLayout() {
         <Sidebar />
         <div className="flex-1 md:ml-64 relative overflow-auto pb-16 md:pb-0">
           <div className="absolute inset-0 bg-gradient-to-t from-orange-500/3 via-transparent to-transparent pointer-events-none" />
+          <div className="md:hidden border-b px-4 py-3 bg-card/50">
+            <Link href="/profile">
+              <div className="flex items-center gap-3 cursor-pointer hover:opacity-70 transition-opacity">
+                {user?.profileImageUrl ? (
+                  <img 
+                    src={user.profileImageUrl} 
+                    alt="Profile" 
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                    <UserIcon className="h-5 w-5" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className="text-sm font-bold" data-testid="text-mobile-profile-username">{user?.username || user?.firstName || "Profile"}</p>
+                  <p className="text-xs text-muted-foreground">Tap to view</p>
+                </div>
+              </div>
+            </Link>
+          </div>
           <main className="container mx-auto p-4 md:p-8 max-w-7xl relative z-10">
             <PageTransition>
               <Switch>
