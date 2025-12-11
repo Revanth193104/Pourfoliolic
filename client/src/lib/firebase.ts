@@ -1,17 +1,17 @@
 import { initializeApp } from "firebase/app";
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signOut, 
-  onAuthStateChanged, 
-  browserLocalPersistence, 
-  browserSessionPersistence,
-  setPersistence, 
-  sendPasswordResetEmail,
-  createUserWithEmailAndPassword,
+import {
+  getAuth,
+  signInWithPopup,
   signInWithEmailAndPassword,
-  type User 
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  type User,
 } from "firebase/auth";
 
 declare global {
@@ -28,11 +28,12 @@ declare global {
   }
 }
 
-const firebaseConfig = window.FIREBASE_CONFIG || {
+// Use config from window if available, otherwise fall back to env vars
+const firebaseConfig = (window as any).firebaseConfig || {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
+  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
@@ -71,7 +72,7 @@ export async function handleRedirectResult() {
 
 export async function logOut() {
   try {
-    await signOut(auth);
+    await firebaseSignOut(auth);
   } catch (error) {
     console.error("Error signing out:", error);
     throw error;

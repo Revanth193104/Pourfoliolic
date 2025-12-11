@@ -1,4 +1,5 @@
-window.FIREBASE_CONFIG = {
+
+window.firebaseConfig = {
   apiKey: "AIzaSyAX20IRcIdPm7l10wAUgnE0sw37t6KaSkQ",
   authDomain: "pourfoliolic.firebaseapp.com",
   projectId: "pourfoliolic",
