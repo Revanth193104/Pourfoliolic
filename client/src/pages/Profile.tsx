@@ -369,14 +369,14 @@ export default function Profile() {
             </Button>
           </div>
           
-          <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+          <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
             <div>
               <h4 className="font-medium">Theme Preference</h4>
               <p className="text-sm text-muted-foreground">
                 Choose your preferred appearance
               </p>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-2 flex-wrap">
               <Button 
                 variant={theme === "light" ? "default" : "outline"} 
                 size="sm"
