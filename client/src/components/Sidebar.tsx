@@ -184,7 +184,7 @@ export function MobileNav() {
     { href: "/cellar", label: "Cellar", icon: Wine, requiresAuth: true },
     { href: "/log", label: "Log", icon: PlusCircle, requiresAuth: true },
     { href: "/community", label: "Community", icon: Users, requiresAuth: false },
-    { href: "/profile", label: "Me", icon: User, requiresAuth: true },
+    { href: "/chat", label: "Messages", icon: MessageCircle, requiresAuth: true },
   ];
 
   const visibleNavItems = navItems.filter(
