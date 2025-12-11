@@ -1,16 +1,3 @@
-import { initializeApp } from "firebase/app";
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signOut, 
-  onAuthStateChanged, 
-  browserLocalPersistence, 
-  browserSessionPersistence,
-  setPersistence, 
-  sendPasswordResetEmail,
-  type User 
-} from "firebase/auth";
 
 declare global {
   interface Window {
