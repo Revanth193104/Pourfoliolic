@@ -1,4 +1,4 @@
-import { LayoutDashboard, PlusCircle, Wine, Martini, Users, User, LogOut } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Wine, Martini, Users, MessageCircle, User, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -87,6 +87,7 @@ export function Sidebar() {
     { href: "/cellar", label: "My Cellar", icon: Wine, requiresAuth: true },
     { href: "/cocktails", label: "Cocktail Library", icon: Martini, requiresAuth: false },
     { href: "/community", label: "Community", icon: Users, requiresAuth: false },
+    { href: "/chat", label: "Messages", icon: MessageCircle, requiresAuth: true },
     { href: "/profile", label: "Profile", icon: User, requiresAuth: true },
   ];
 

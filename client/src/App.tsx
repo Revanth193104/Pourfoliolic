@@ -8,6 +8,7 @@ import EditDrink from "@/pages/EditDrink";
 import Cellar from "@/pages/Cellar";
 import CocktailLibrary from "@/pages/CocktailLibrary";
 import Community from "@/pages/Community";
+import Chat from "@/pages/Chat";
 import Profile from "@/pages/Profile";
 import Landing from "@/pages/Landing";
 import NotFound from "@/pages/not-found";
@@ -141,6 +142,7 @@ function AppLayout() {
               <Route path="/cellar" component={Cellar} />
               <Route path="/cocktails" component={CocktailLibrary} />
               <Route path="/community" component={Community} />
+              <Route path="/chat" component={Chat} />
               <Route path="/profile" component={Profile} />
               <Route component={NotFound} />
             </Switch>
