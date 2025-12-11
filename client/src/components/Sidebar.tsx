@@ -45,12 +45,9 @@ function UserSection({ user }: { user: UserType }) {
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate" data-testid="text-user-name">
-            {user.firstName || user.email || "User"}
-          </p>
           {user.username && (
             <Link href="/profile">
-              <p className="text-xs text-muted-foreground truncate hover:text-foreground cursor-pointer transition-colors" data-testid="text-user-username">
+              <p className="text-sm font-bold truncate hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer transition-colors" data-testid="text-user-username">
                 {user.username}
               </p>
             </Link>
