@@ -9,6 +9,8 @@ import {
   browserSessionPersistence,
   setPersistence, 
   sendPasswordResetEmail,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   type User 
 } from "firebase/auth";
 
@@ -84,4 +86,28 @@ export async function getIdToken(): Promise<string | null> {
   const user = auth.currentUser;
   if (!user) return null;
   return user.getIdToken();
+}
+
+export async function signUpWithEmail(email: string, password: string, rememberMe: boolean = true) {
+  try {
+    const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistence);
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    return result.user;
+  } catch (error) {
+    console.error("Error signing up with email:", error);
+    throw error;
+  }
+}
+
+export async function signInWithEmail(email: string, password: string, rememberMe: boolean = true) {
+  try {
+    const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistence);
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    return result.user;
+  } catch (error) {
+    console.error("Error signing in with email:", error);
+    throw error;
+  }
 }
