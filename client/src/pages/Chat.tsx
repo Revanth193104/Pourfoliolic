@@ -169,6 +169,8 @@ export default function Chat() {
   };
 
   useEffect(() => {
+    if (!firebaseUser) return;
+    
     const load = async () => {
       setLoading(true);
       await Promise.all([fetchConversations(), fetchConnections()]);
