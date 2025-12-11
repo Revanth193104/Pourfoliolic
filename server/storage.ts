@@ -455,7 +455,7 @@ export class DatabaseStorage implements IStorage {
 
   async setUsername(userId: string, username: string): Promise<User> {
     const [user] = await db.update(users)
-      .set({ username: username.toLowerCase(), updatedAt: new Date() })
+      .set({ username: username, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning();
     return user;

@@ -106,7 +106,7 @@ export default function UsernameSetup({ open, onComplete }: UsernameSetupProps) 
                 data-testid="input-username"
                 placeholder="your_username"
                 value={username}
-                onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                onChange={(e) => setUsername(e.target.value)}
                 className="pl-8 pr-10"
                 autoComplete="off"
               />
