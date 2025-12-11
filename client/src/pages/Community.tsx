@@ -3,6 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -110,6 +120,8 @@ export default function Community() {
   const [following, setFollowing] = useState<UserProfile[]>([]);
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
+  const [confirmRemoveFollower, setConfirmRemoveFollower] = useState<{ id: string; name: string } | null>(null);
+  const [confirmUnfollow, setConfirmUnfollow] = useState<{ id: string; name: string } | null>(null);
   const [followRequests, setFollowRequests] = useState<(UserProfile & { requestedAt?: Date | null })[]>([]);
   const [viewingUser, setViewingUser] = useState<{
     id: string;
@@ -985,7 +997,7 @@ export default function Community() {
                               size="sm" 
                               variant="ghost"
                               className="text-muted-foreground hover:text-destructive"
-                              onClick={() => handleRemoveFollower(follower.id)}
+                              onClick={() => setConfirmRemoveFollower({ id: follower.id, name: getUserDisplayName(follower) })}
                               data-testid={`button-remove-follower-${follower.id}`}
                             >
                               <UserMinus className="h-4 w-4" />
@@ -1028,7 +1040,7 @@ export default function Community() {
                               size="sm" 
                               variant="ghost"
                               className="text-muted-foreground hover:text-destructive"
-                              onClick={() => handleFollow(followed.id, "accepted")}
+                              onClick={() => setConfirmUnfollow({ id: followed.id, name: getUserDisplayName(followed) })}
                               data-testid={`button-unfollow-${followed.id}`}
                             >
                               <UserMinus className="h-4 w-4" />
@@ -1108,6 +1120,58 @@ export default function Community() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!confirmRemoveFollower} onOpenChange={(open) => !open && setConfirmRemoveFollower(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Follower</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {confirmRemoveFollower?.name} from your followers? They won't be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-remove-follower">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmRemoveFollower) {
+                  handleRemoveFollower(confirmRemoveFollower.id);
+                  setConfirmRemoveFollower(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-remove-follower"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmUnfollow} onOpenChange={(open) => !open && setConfirmUnfollow(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unfollow</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to unfollow {confirmUnfollow?.name}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-unfollow">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmUnfollow) {
+                  handleFollow(confirmUnfollow.id, "accepted");
+                  setConfirmUnfollow(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-unfollow"
+            >
+              Unfollow
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
