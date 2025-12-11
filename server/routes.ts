@@ -84,6 +84,52 @@ export async function registerRoutes(
     }
   });
 
+  // Export drinks as CSV - must be before :id route
+  app.get("/api/drinks/export", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.uid;
+      const format = (req.query.format as string) || "csv";
+      
+      const drinks = await storage.getDrinks({ userId }, "date", "desc");
+      
+      if (format === "csv") {
+        const headers = ["Name", "Maker", "Type", "Subtype", "Rating", "Date", "Price", "Currency", "Location", "Purchase Venue", "Nose", "Palate", "Finish", "Pairings", "Occasion", "Mood"];
+        const csvRows = [headers.join(",")];
+        
+        for (const drink of drinks) {
+          const row = [
+            `"${(drink.name || "").replace(/"/g, '""')}"`,
+            `"${(drink.maker || "").replace(/"/g, '""')}"`,
+            `"${(drink.type || "").replace(/"/g, '""')}"`,
+            `"${(drink.subtype || "").replace(/"/g, '""')}"`,
+            drink.rating || "",
+            drink.date ? new Date(drink.date).toISOString().split("T")[0] : "",
+            drink.price || "",
+            drink.currency || "",
+            `"${(drink.location || "").replace(/"/g, '""')}"`,
+            `"${(drink.purchaseVenue || "").replace(/"/g, '""')}"`,
+            `"${(drink.nose || []).join("; ").replace(/"/g, '""')}"`,
+            `"${(drink.palate || []).join("; ").replace(/"/g, '""')}"`,
+            `"${(drink.finish || "").replace(/"/g, '""')}"`,
+            `"${(drink.pairings || []).join("; ").replace(/"/g, '""')}"`,
+            `"${(drink.occasion || "").replace(/"/g, '""')}"`,
+            `"${(drink.mood || "").replace(/"/g, '""')}"`,
+          ];
+          csvRows.push(row.join(","));
+        }
+        
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", "attachment; filename=pourfoliolic-tastings.csv");
+        res.send(csvRows.join("\n"));
+      } else {
+        res.status(400).json({ error: "Unsupported format. Use 'csv'" });
+      }
+    } catch (error) {
+      console.error("Error exporting drinks:", error);
+      res.status(500).json({ error: "Failed to export drinks" });
+    }
+  });
+
   app.get("/api/drinks/:id", async (req, res) => {
     try {
       const drink = await storage.getDrinkById(req.params.id);
@@ -649,52 +695,6 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error setting username:", error);
       res.status(500).json({ error: "Failed to set username" });
-    }
-  });
-
-  // Export drinks as CSV
-  app.get("/api/drinks/export", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const userId = (req as AuthenticatedRequest).user!.uid;
-      const format = (req.query.format as string) || "csv";
-      
-      const drinks = await storage.getDrinks({ userId }, "date", "desc");
-      
-      if (format === "csv") {
-        const headers = ["Name", "Maker", "Type", "Subtype", "Rating", "Date", "Price", "Currency", "Location", "Purchase Venue", "Nose", "Palate", "Finish", "Pairings", "Occasion", "Mood"];
-        const csvRows = [headers.join(",")];
-        
-        for (const drink of drinks) {
-          const row = [
-            `"${(drink.name || "").replace(/"/g, '""')}"`,
-            `"${(drink.maker || "").replace(/"/g, '""')}"`,
-            `"${(drink.type || "").replace(/"/g, '""')}"`,
-            `"${(drink.subtype || "").replace(/"/g, '""')}"`,
-            drink.rating || "",
-            drink.date ? new Date(drink.date).toISOString().split("T")[0] : "",
-            drink.price || "",
-            drink.currency || "",
-            `"${(drink.location || "").replace(/"/g, '""')}"`,
-            `"${(drink.purchaseVenue || "").replace(/"/g, '""')}"`,
-            `"${(drink.nose || []).join("; ").replace(/"/g, '""')}"`,
-            `"${(drink.palate || []).join("; ").replace(/"/g, '""')}"`,
-            `"${(drink.finish || "").replace(/"/g, '""')}"`,
-            `"${(drink.pairings || []).join("; ").replace(/"/g, '""')}"`,
-            `"${(drink.occasion || "").replace(/"/g, '""')}"`,
-            `"${(drink.mood || "").replace(/"/g, '""')}"`,
-          ];
-          csvRows.push(row.join(","));
-        }
-        
-        res.setHeader("Content-Type", "text/csv");
-        res.setHeader("Content-Disposition", "attachment; filename=pourfoliolic-tastings.csv");
-        res.send(csvRows.join("\n"));
-      } else {
-        res.status(400).json({ error: "Unsupported format. Use 'csv'" });
-      }
-    } catch (error) {
-      console.error("Error exporting drinks:", error);
-      res.status(500).json({ error: "Failed to export drinks" });
     }
   });
 
