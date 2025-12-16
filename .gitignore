@@ -1,6 +1,49 @@
-node_modules
-dist
-.DS_Store
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build
+dist/
 server/public
+
+# Environment variables (NEVER commit these!)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Secrets and credentials (NEVER commit these!)
+*.pem
+*.key
+*.secret
+credentials.json
+service-account-key.json
+
+# IDE & OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cache/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Config
 vite.config.ts.*
-*.tar.gz
+.replit
+.config/
+
+# Firebase
+.firebaserc
+firebase-debug.log
+
+# Replit specific
+.upm/
+.local/
