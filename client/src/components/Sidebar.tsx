@@ -183,6 +183,7 @@ export function MobileNav() {
     { href: "/", label: "Home", icon: LayoutDashboard, requiresAuth: true },
     { href: "/cellar", label: "Cellar", icon: Wine, requiresAuth: true },
     { href: "/log", label: "Log", icon: PlusCircle, requiresAuth: true },
+    { href: "/cocktails", label: "Cocktails", icon: Martini, requiresAuth: false },
     { href: "/community", label: "Community", icon: Users, requiresAuth: false },
     { href: "/chat", label: "Messages", icon: MessageCircle, requiresAuth: true },
   ];
@@ -192,8 +193,8 @@ export function MobileNav() {
   );
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t bg-background p-2 md:hidden z-50">
-      <nav className="flex justify-around">
+    <div className="fixed bottom-0 left-0 right-0 border-t bg-background p-1 md:hidden z-50">
+      <nav className="flex justify-around overflow-x-auto">
         {visibleNavItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <div
@@ -202,8 +203,8 @@ export function MobileNav() {
                 location === item.href ? "text-primary" : "text-muted-foreground"
               )}
             >
-              <item.icon className="h-5 w-5" />
-              {item.label}
+              <item.icon className="h-4 w-4" />
+              <span className="text-[10px] md:text-xs">{item.label}</span>
             </div>
           </Link>
         ))}
