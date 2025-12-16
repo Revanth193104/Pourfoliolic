@@ -152,7 +152,9 @@ Contributions welcome! Feel free to:
 
 ## License
 
-Open source - feel free to learn and contribute!
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**Copyright © 2025 Revanth193104**
 
 ## Support
 
