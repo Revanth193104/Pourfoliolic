@@ -135,7 +135,7 @@ function AppLayout() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-purple-950/5 text-foreground flex flex-col font-sans antialiased">
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <div className="flex-1 md:ml-64 relative overflow-auto pb-16 md:pb-0">
+        <div className="flex-1 md:ml-64 relative overflow-y-auto pb-16 md:pb-0">
           <div className="absolute inset-0 bg-gradient-to-t from-orange-500/3 via-transparent to-transparent pointer-events-none" />
           <div className="md:hidden border-b px-4 py-3 bg-card/50">
             <Link href="/profile">

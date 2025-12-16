@@ -173,12 +173,12 @@ export default function Home() {
             exit={{ opacity: 0, scale: 0.9 }}
           >
             <Card data-testid={`widget-${id}`}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Tastings</CardTitle>
-                <Wine className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 md:pb-4">
+                <CardTitle className="text-xs md:text-sm font-medium">Total Tastings</CardTitle>
+                <Wine className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold" data-testid="text-total-tastings">
+                <div className="text-xl md:text-2xl font-bold" data-testid="text-total-tastings">
                   {loading ? "..." : stats?.totalDrinks || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">All time</p>
@@ -196,9 +196,9 @@ export default function Home() {
             exit={{ opacity: 0, scale: 0.9 }}
           >
             <Card data-testid={`widget-${id}`}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-                <Star className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 md:pb-4">
+                <CardTitle className="text-xs md:text-sm font-medium">Average Rating</CardTitle>
+                <Star className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-average-rating">
@@ -219,9 +219,9 @@ export default function Home() {
             exit={{ opacity: 0, scale: 0.9 }}
           >
             <Card data-testid={`widget-${id}`}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Favorite Type</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 md:pb-4">
+                <CardTitle className="text-xs md:text-sm font-medium">Favorite Type</CardTitle>
+                <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-favorite-type">
@@ -242,9 +242,9 @@ export default function Home() {
             exit={{ opacity: 0, scale: 0.9 }}
           >
             <Card data-testid={`widget-${id}`}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-                <span className="text-lg font-bold text-muted-foreground">$</span>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 md:pb-4">
+                <CardTitle className="text-xs md:text-sm font-medium">Total Spent</CardTitle>
+                <span className="text-base md:text-lg font-bold text-muted-foreground">$</span>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-total-spent">

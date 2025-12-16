@@ -105,3 +105,23 @@ body {
 h1, h2, h3, h4, h5, h6 {
   @apply font-display font-bold;
 }
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+  body {
+    @apply text-sm;
+  }
+  
+  .grid {
+    @apply gap-3;
+  }
+  
+  .space-y-4 {
+    @apply space-y-3;
+  }
+}
+
+/* Smooth scrolling on mobile */
+html {
+  scroll-behavior: smooth;
+}

@@ -29,7 +29,10 @@ export default function Cellar() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
-    fetchDrinks();
+    const timer = setTimeout(() => {
+      fetchDrinks();
+    }, 300);
+    return () => clearTimeout(timer);
   }, [typeFilter, ratingFilter, sortBy, sortOrder, searchQuery]);
 
   const fetchDrinks = async () => {

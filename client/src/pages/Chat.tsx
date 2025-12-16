@@ -227,8 +227,8 @@ export default function Chat() {
         <h1 className="text-3xl font-bold">Messages</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ height: 'calc(100vh - 200px)' }}>
-        <Card className="lg:col-span-1 overflow-hidden flex flex-col">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-1 overflow-hidden flex flex-col max-h-96 lg:max-h-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Conversations</CardTitle>
           </CardHeader>
@@ -309,7 +309,7 @@ export default function Chat() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 flex flex-col overflow-hidden">
+        <Card className="lg:col-span-2 flex flex-col overflow-hidden min-h-96 lg:min-h-auto">
           {selectedConversation ? (
             <>
               <CardHeader className="pb-3 border-b flex-row items-center gap-3">
