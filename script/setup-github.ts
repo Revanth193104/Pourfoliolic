@@ -3,7 +3,7 @@
 import { execSync } from 'child_process';
 
 const username = 'Revanth193104';
-const repoName = 'pourfoliolic';
+const repoName = 'Pourfoliolic';
 
 console.log(`
 ╔════════════════════════════════════════════════════════════╗
